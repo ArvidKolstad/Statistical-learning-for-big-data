@@ -1,31 +1,33 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.pipeline import Pipeline
 
-train = pd.read_csv("data/train_data.csv")
-test = pd.read_csv("data/test_data.csv")
 
-train_label = train['label']
-train_data = train.drop('label', axis = 1)
+train_label = np.load('data/train_labels.npy')
+train_data = np.load('data/train_matrix.npy')
 
-test_label = test['label']
-test_data = test.drop('label', axis = 1)
+test_label = np.load('data/test_labels.npy')
+test_data = np.load('data/test_matrix.npy')
 
 print(train_data.shape)
 
-plt.imshow(train_data.iloc[500].to_numpy().reshape(28,28))
+image_idx = random.randint(0, train_data.shape[0])
+print(image_idx)
+
+plt.imshow(train_data[500].reshape(28,28))
 plt.axis('off')
 plt.show()
 
-pca = PCA(n_components = 0.95)
-tsne = TSNE(n_components = 2, random_state = 42)
+# pca = PCA(n_components = 0.95)
+# tsne = TSNE(n_components = 3, random_state = 42)
 
 pca_tsne = Pipeline([
     ('pca', PCA(n_components=0.95, random_state=42)),
-    ('tsne', TSNE(n_components=2, random_state=42))
+    ('tsne', TSNE(n_components=3, random_state=42))
 ])
 
 train_reduced = pca_tsne.fit_transform(train_data)
