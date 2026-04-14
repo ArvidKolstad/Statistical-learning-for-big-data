@@ -9,7 +9,15 @@ def random_forest_classifier():
 
 
 def main():
-    print("Hi")
+    random_forest_classifier_settings = {
+        "criterion": "gini",
+        "max_depth": "None",
+        "min_samples_split": None,
+        "min_samples_leaf": 1,
+        "min_weight_fraction_leaf": 0.0,
+        "max_features": "sqrt",
+    }
+
     random_forest_classifier()
 
 
