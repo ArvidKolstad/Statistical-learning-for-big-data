@@ -4,7 +4,7 @@ from sklearn.model_selection import ShuffleSplit
 
 
 def split_load_data():
-    test_data_frac = 0.1
+
     PATHIM = "data/images.csv"
     PATHLB = "data/labels.csv"
 
@@ -19,24 +19,18 @@ def split_load_data():
     df = images.join(labels)
 
     unique_labels = df["label"].unique()
-    df_test = pd.DataFrame()
-    df_train = pd.DataFrame()
-
     for label in unique_labels:
         df_label = df["label"].loc[df["label"] == label]
-        n_labels = df_label.shape[1]
-        test_index = np.random.randint(n_labels, size=n_labels * test_data_frac)
-        df_test = pd.concat([df_test, df_label[test_index]])
-        df_train = pd.concat([df_train, df_label[~test_index]])
-
-    test_res = df_test.sample(frac=1).reset_index(drop=True)
-    test_res = df_train.sample(frac=1).reset_index(drop=True)
 
     df["mean_intensity"] = images.mean(axis=1)
 
     ax = df.pivot(columns="label", values="mean_intensity").hist(bins=40)
     fig = ax[0, 0].get_figure()
     fig.savefig("../figures/data_histogram.png")
+    # print(df["label"].unique())
+    images = images.to_numpy()
+    labels = labels.to_numpy()
+    return images, labels
 
 
 def preprocess_data(images, labels, data_splits, test_size, train_size):
