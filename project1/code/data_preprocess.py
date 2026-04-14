@@ -33,8 +33,16 @@ def split_data():
     test_res = df_test.sample(frac=1).reset_index(drop=True)
     train_res = df_train.sample(frac=1).reset_index(drop=True)
 
-    print(test_res.shape)
-    print(train_res.shape)
+    train_labels = train_res["label"].to_numpy()
+    test_labels = test_res["label"].to_numpy()
+
+    train_matrix = train_res.drop(columns="label").to_numpy()
+    test_matrix = test_res.drop(columns="label").to_numpy()
+
+    np.save("./data/train_labels", train_labels)
+    np.save("./data/train_matrix", train_matrix)
+    np.save("./data/test_labels", test_labels)
+    np.save("./data/test_matrix", test_matrix)
 
     test_res.to_csv("./data/test_data.csv")
     train_res.to_csv("./data/train_data.csv")
