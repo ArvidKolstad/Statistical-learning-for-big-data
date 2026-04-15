@@ -1,40 +1,54 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import random
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.pipeline import Pipeline
 
 
-train_label = np.load('data/train_labels.npy')
-train_data = np.load('data/train_matrix.npy')
+def dimension_reduction(
+    train_data,
+    train_label=None,
+    n_dimensions=2,
+    plot=False,
+    save_path=None
+):
 
-test_label = np.load('data/test_labels.npy')
-test_data = np.load('data/test_matrix.npy')
+    pca_tsne = Pipeline([
+        ('pca', PCA(n_components=0.95, random_state=42)),
+        ('tsne', TSNE(n_components=n_dimensions, random_state=42))
+    ])
 
-print(train_data.shape)
+    train_reduced = pca_tsne.fit_transform(train_data)
 
-image_idx = random.randint(0, train_data.shape[0])
-print(image_idx)
+    if plot:
+        if n_dimensions == 2:
+            plt.figure(figsize=(12, 8))
+            plt.scatter(
+                train_reduced[:, 0],
+                train_reduced[:, 1],
+                c=train_label,
+                cmap='jet'
+            )
+            plt.colorbar()
+            plt.axis('off')
 
-plt.imshow(train_data[500].reshape(28,28))
-plt.axis('off')
-plt.show()
+        elif n_dimensions == 3:
+            fig = plt.figure(figsize=(10, 10))
+            ax = plt.axes(projection='3d')
 
-# pca = PCA(n_components = 0.95)
-# tsne = TSNE(n_components = 3, random_state = 42)
+            sc = ax.scatter(
+                train_reduced[:, 0],
+                train_reduced[:, 1],
+                train_reduced[:, 2],
+                c=train_label,
+                cmap='jet'
+            )
 
-pca_tsne = Pipeline([
-    ('pca', PCA(n_components=0.95, random_state=42)),
-    ('tsne', TSNE(n_components=3, random_state=42))
-])
+            fig.colorbar(sc)
 
-train_reduced = pca_tsne.fit_transform(train_data)
-print(train_reduced.shape)
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
-plt.figure(figsize=(12,8))
-plt.scatter(train_reduced[:,0], train_reduced[:,1], c=train_label, cmap='jet')
-plt.colorbar()
-plt.axis('off')
-plt.show()
+        plt.show()
+
+    return train_reduced
