@@ -6,17 +6,15 @@ from sklearn.pipeline import Pipeline
 
 
 def dimension_reduction(
-    train_data,
-    train_label=None,
-    n_dimensions=2,
-    plot=False,
-    save_path=None
+    train_data, train_label=None, n_dimensions=2, plot=False, save_path=None
 ):
 
-    pca_tsne = Pipeline([
-        ('pca', PCA(n_components=0.95, random_state=42)),
-        ('tsne', TSNE(n_components=n_dimensions, random_state=42))
-    ])
+    pca_tsne = Pipeline(
+        [
+            ("pca", PCA(n_components=0.95)),
+            ("tsne", TSNE(n_components=n_dimensions)),
+        ]
+    )
 
     train_reduced = pca_tsne.fit_transform(train_data)
 
@@ -24,31 +22,48 @@ def dimension_reduction(
         if n_dimensions == 2:
             plt.figure(figsize=(12, 8))
             plt.scatter(
-                train_reduced[:, 0],
-                train_reduced[:, 1],
-                c=train_label,
-                cmap='jet'
+                train_reduced[:, 0], train_reduced[:, 1], c=train_label, cmap="jet"
             )
             plt.colorbar()
-            plt.axis('off')
+            plt.axis("off")
 
         elif n_dimensions == 3:
             fig = plt.figure(figsize=(10, 10))
-            ax = plt.axes(projection='3d')
+            ax = plt.axes(projection="3d")
 
             sc = ax.scatter(
                 train_reduced[:, 0],
                 train_reduced[:, 1],
                 train_reduced[:, 2],
                 c=train_label,
-                cmap='jet'
+                cmap="jet",
             )
 
             fig.colorbar(sc)
 
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
 
         plt.show()
 
     return train_reduced
+
+
+def main():
+    training_labels = np.load("./data/train_labels.npy")
+    training_matrix = np.load("./data/train_matrix.npy")
+    dimensions = 3
+    save_fig = "../figures/dim_reduced_data.png"
+
+    dimension_reduction(
+        training_matrix,
+        train_label=training_labels,
+        n_dimensions=dimensions,
+        plot=True,
+        save_path=save_fig,
+    )
+
+
+if __name__ == "__main__":
+    main()
+
