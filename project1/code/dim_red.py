@@ -6,28 +6,61 @@ from sklearn.pipeline import Pipeline
 
 
 def dimension_reduction(
-    train_data, train_label=None, n_dimensions=2, plot=False, save_path=None
+    train_data, 
+    test_data=None,
+    train_label=None, 
+    tsne=False,
+    n_dimensions=2, 
+    plot=False, 
+    save_path=None
 ):
 
-    pca_tsne = Pipeline(
-        [
-            ("pca", PCA(n_components=0.95)),
-            ("tsne", TSNE(n_components=n_dimensions)),
-        ]
-    )
+    pca = PCA(n_components=0.95, random_state=42)
+    train_pca = pca.fit_transform(train_data)
 
-    train_reduced = pca_tsne.fit_transform(train_data)
+    if tsne:
+        # tsne = TSNE(n_components=n_dimensions, random_state=42)
+        tsne = TSNE(
+            n_components=n_dimensions,
+            perplexity=30,
+            learning_rate="auto",
+            init="pca",
+            random_state=42
+)
+        train_reduced = tsne.fit_transform(train_pca)
+        test_reduced = None
+
+    else:
+        train_reduced = train_pca
+
+        if test_data is not None:
+            test_reduced = pca.transform(test_data)
+        else:
+            test_reduced = None
 
     if plot:
-        if n_dimensions == 2:
+        if train_label is None:
+            raise ValueError("train_label must be provided for plotting")
+
+        if n_dimensions >= 2:
             plt.figure(figsize=(12, 8))
             plt.scatter(
-                train_reduced[:, 0], train_reduced[:, 1], c=train_label, cmap="jet"
+                train_reduced[:, 0], 
+                train_reduced[:, 1], 
+                c=train_label, 
+                cmap="jet"
             )
             plt.colorbar()
             plt.axis("off")
+            plt.title("2D projection")
 
-        elif n_dimensions == 3:
+            if save_path:
+                plt.savefig(save_path.replace(".png", "_2d.png"),
+                        dpi=300, bbox_inches="tight")
+
+            plt.show()
+
+        if n_dimensions == 3:
             fig = plt.figure(figsize=(10, 10))
             ax = plt.axes(projection="3d")
 
@@ -40,24 +73,29 @@ def dimension_reduction(
             )
 
             fig.colorbar(sc)
+            ax.set_title("3D projection")
 
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches="tight")
+            if save_path:
+                plt.savefig(save_path.replace(".png", "_3d.png"), 
+                            dpi=300, bbox_inches="tight")
 
-        plt.show()
+            plt.show()
 
-    return train_reduced
+
+    return train_reduced, test_reduced
 
 
 def main():
     training_labels = np.load("./data/train_labels.npy")
     training_matrix = np.load("./data/train_matrix.npy")
+
     dimensions = 3
     save_fig = "../figures/dim_reduced_data.png"
 
     dimension_reduction(
         training_matrix,
         train_label=training_labels,
+        tsne=True,
         n_dimensions=dimensions,
         plot=True,
         save_path=save_fig,
@@ -66,4 +104,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
