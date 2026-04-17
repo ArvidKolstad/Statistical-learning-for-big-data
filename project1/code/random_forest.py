@@ -58,7 +58,6 @@ def find_good_max_sample(
     sample_len = len(sample_frac)
     scores = []
     for idx, frac in enumerate(sample_frac):
-        print(frac)
         print(f"Done {idx+1}/{sample_len}")
         settings["max_samples"] = frac
         rf = RandomForestClassifier(**settings)
@@ -124,7 +123,7 @@ def main():
         "warm_start": False,
         "class_weight": "balanced",
         "ccp_alpha": 1.09e-4,
-        "max_samples": 0.91,
+        "max_samples": 0.86,
     }
 
     training_labels = np.load("./data/train_labels.npy")
@@ -139,15 +138,11 @@ def main():
     )
     print(f"Best alpha: {best_ccp_alpha}")
     classifier_settings["ccp_alpha"] = best_ccp_alpha
-    """
 
     # print(training_matrix.shape)
-    """
     find_good_max_sample(
         training_matrix, training_labels, max_samples_range, classifier_settings
     )
-    """
-    """
     plot_accuracy_rate(
         training_matrix,
         training_labels,
@@ -156,7 +151,6 @@ def main():
         save_plot,
     )
     """
-
     score = train_rfc(
         training_matrix,
         training_labels,

@@ -2,9 +2,10 @@ import numpy as np
 import torch.nn as nn
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.utils.data import DataLoader, Dataset
-from torch.optim import SGD
+from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+from torch.optim import Adam
 from dim_red import dimension_reduction
+from sklearn.model_selection import StratifiedKFold
 
 
 class ReducedDimDataset(Dataset):
@@ -41,7 +42,14 @@ class MultilayerPerception(nn.Module):
         return self.network(x)
 
     def train_params(
-        self, epochs, data_loader, loss_function, optimizer, scheduler, save_model=False
+        self,
+        epochs,
+        train_data_loader,
+        val_data_loader,
+        loss_function,
+        optimizer,
+        scheduler,
+        save_model=False,
     ):
 
         self.to(self.device)
@@ -52,16 +60,17 @@ class MultilayerPerception(nn.Module):
             self.train()
             running_loss = 0.0
 
-            for inputs, labels in data_loader:
+            for inputs, labels in train_data_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
                 optimizer.zero_grad(set_to_none=True)
                 outputs = self(inputs)
                 loss = loss_function(outputs, labels)
-                loss.backwards()
+                loss.backward()
                 running_loss += loss.item()
-            avg_t_loss = running_loss / len(data_loader)
-            avg_v_loss = self.validate_model(self, loss_function)
+            avg_t_loss = running_loss / len(train_data_loader)
+            avg_v_loss = self.validate_model(val_data_loader, loss_function)
             scheduler.step(avg_v_loss)
-            if best_val_loss < avg_v_loss:
+            if best_val_loss > avg_v_loss:
                 best_val_loss = avg_v_loss
                 if save_model:
                     params = self.state_dict()
@@ -104,30 +113,116 @@ def get_activation_function(activation_name):
         raise ValueError("Activation name is wrong or not implemented")
 
 
+def kCV(
+    k,
+    model_class,
+    data_set,
+    network_layout,
+    training_settings,
+    optimizer,
+    optimizer_settings,
+    scheduler,
+    scheduler_settings,
+):
+
+    skf = StratifiedKFold(n_splits=k, shuffle=True)
+    fold_score = []
+    matrixes = [data[0] for data in data_set]
+    labels = [data[1] for data in data_set]
+
+    for fold, (train_idx, val_idx) in enumerate(skf.split(matrixes, labels)):
+        print(f"Fold: {fold}")
+        train_data_loader = DataLoader(
+            data_set, batch_size=100, sampler=SubsetRandomSampler(train_idx)
+        )
+        val_data_loader = DataLoader(
+            data_set, batch_size=256, sampler=SubsetRandomSampler(val_idx)
+        )
+        training_settings["train_data_loader"] = train_data_loader
+        training_settings["val_data_loader"] = val_data_loader
+
+        model = model_class(**network_layout)
+        model.to(model.device)
+
+        optimizer_settings["params"] = model.parameters()
+        opt_func = optimizer(**optimizer_settings)
+
+        scheduler_settings["optimizer"] = opt_func
+        sched_func = scheduler(**scheduler_settings)
+
+        training_settings["optimizer"] = opt_func
+        training_settings["scheduler"] = sched_func
+
+        score = model.train_params(**training_settings)
+        fold_score.append(score)
+    return np.mean(fold_score)
+
+
+# tänkte att man kunde göra en funktion för hyperparameteroptimeringen eftersom de är i olika dicts så kan man säga vilken dict de befinner sig genom get_dict och sen använda den i hyper_parameter_opt för att skriva mindre kod.
+def get_dict(module):
+    if module == "train":
+        return 0
+    elif module == "optimizer":
+        return 1
+    elif module == "scheduler":
+        return 2
+    else:
+        raise ValueError("Module doesn't exist")
+
+
+def hyper_parameter_opt(hyper_parameter, parameter_range, module, params):
+    print("hi")
+
+
 def main():
     input_layer = 3
     classes = 10
-    settings = {
-        "layer_dim": [input_layer, 40, 40, classes],
-        "act_func": ["ReLU", "ReLU", "identity"],
+    data_batches = 10
+
+    layout = {
+        "layer_dim": [input_layer, 256, 128, 128, 64, 64, 32, classes],
+        "act_func": ["ReLU", "ReLU", "ReLU", "ReLU", "ReLU", "ReLU", "identity"],
         "dropout_rate": 0.2,
     }
-    loss_function = nn.CrossEntropyLoss()
-    model = MultilayerPerception(**settings)
-    optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
-    scheduler = ReduceLROnPlateau(optimizer, patience=10, factor=0.5)
+    optimizer = Adam
+    optimizer_settings = {
+        "params": None,
+        "lr": 0.001,
+        "weight_decay": 1e-4,
+    }
+    scheduler = ReduceLROnPlateau
+    scheduler_settings = {"optimizer": None, "patience": 5, "factor": 0.5}
 
     training_matrix = np.load("./data/train_matrix.npy")
     training_labels = np.load("./data/train_labels.npy")
     red_training_matrix = dimension_reduction(
-        training_matrix, train_label=training_labels
+        training_matrix, train_label=training_labels, n_dimensions=input_layer
     )
+    train_settings = {
+        "epochs": 100,
+        "train_data_loader": None,
+        "val_data_loader": None,
+        "loss_function": nn.CrossEntropyLoss(),
+        "optimizer": None,
+        "scheduler": None,
+    }
 
-    data_set = ReducedDimDataset(red_training_matrix, training_labels)
-    data_loader = DataLoader(data_set)
-    epochs = 20
-
-    model.train_params(epochs, data_loader, loss_function, optimizer, scheduler)
+    data_set = ReducedDimDataset(
+        red_training_matrix,
+        training_labels,
+    )
+    score = kCV(
+        data_batches,
+        MultilayerPerception,
+        data_set,
+        layout,
+        train_settings,
+        optimizer,
+        optimizer_settings,
+        scheduler,
+        scheduler_settings,
+    )
+    print(score)
 
 
 if __name__ == "__main__":
