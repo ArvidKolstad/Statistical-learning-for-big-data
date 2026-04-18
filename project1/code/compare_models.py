@@ -15,38 +15,6 @@ from dim_red import dimension_reduction
 from kNNClassifier import tune_knn
 
 
-# Model training for MLP
-def evaluate_mlp(X_train, y_train, X_test, y_test):
-    dataset = ReducedDimDataset(X_train, y_train)
-    train_loader = DataLoader(dataset, batch_size=128, shuffle=True)
-
-    model = MultilayerPerception(
-        layer_dim=[X_train.shape[1], 128, 64, 10],
-        act_func=["ReLU", "ReLU", "identity"],
-        dropout_rate=0.2
-    )
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    loss_fn = nn.CrossEntropyLoss()
-
-    model.train()
-    for epoch in range(5):  
-        for x, y in train_loader:
-            optimizer.zero_grad()
-            out = model(x.float())
-            loss = loss_fn(out, y)
-            loss.backward()
-            optimizer.step()
-
-    model.eval()
-    with torch.no_grad():
-        X_test_t = torch.tensor(X_test).float()
-        outputs = model(X_test_t)
-        preds = torch.argmax(outputs, dim=1).numpy()
-
-    return accuracy_score(y_test, preds)
-
-
 # Comparisons
 def main():
 
@@ -105,15 +73,18 @@ def main():
     # NOTE: oob_score_ finns bara när bootstrap=True och oob_score=True
 
     # MLP
-    mlp_acc = evaluate_mlp(
-        reduced_train, train_labels,
-        reduced_test, test_labels
+    # MLP
+    mlp = MultilayerPerception(
+        layer_dim=[reduced_train.shape[1], 128, 64, 10],
+        act_func=["ReLU", "ReLU", "identity"],
+        dropout_rate=0.2
     )
 
-    # BUG (multilayer_preceptron.py):
-    # labels måste vara torch.long för CrossEntropyLoss
-    # outputs.squeeze(1) i validate_model() är felaktigt för classification logits
+    mlp.fit(reduced_train, train_labels, epochs=5)
 
+    mlp_pred = mlp.predict(reduced_test)
+    mlp_acc = accuracy_score(test_labels, mlp_pred)
+ 
     # # Results
     # print("y_test shape:", test_labels.shape)
     # print("y_pred shape:", knn_pred.shape)

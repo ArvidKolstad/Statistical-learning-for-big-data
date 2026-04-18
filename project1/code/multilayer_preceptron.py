@@ -130,6 +130,44 @@ class MultilayerPerception(nn.Module):
         self.load_state_dict(best_state)
         return best_val_acc
 
+    # Ny: fit
+    def fit(self, X, y, epochs=10, batch_size=128):
+        self.to(self.device)
+
+        dataset = ReducedDimDataset(X, y)
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        loss_fn = nn.CrossEntropyLoss()
+
+        self.train()
+
+        for epoch in range(epochs):
+            for inputs, labels in loader:
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                optimizer.zero_grad()
+                outputs = self(inputs)
+                loss = loss_fn(outputs, labels)
+                loss.backward()
+                optimizer.step()
+
+        return self
+
+    # Ny: predict
+    def predict(self, X):
+        self.eval()
+
+        X = torch.tensor(X, dtype=torch.float32).to(self.device)
+
+        with torch.no_grad():
+            outputs = self(X)
+            preds = torch.argmax(outputs, dim=1)
+
+        return preds.cpu().numpy()
+
+
     def validate_model(self, val_loader):
         self.eval()
         # val_loss = 0.0
