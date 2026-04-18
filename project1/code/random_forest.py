@@ -128,10 +128,9 @@ def main():
 
     training_labels = np.load("./data/train_labels.npy")
     training_matrix = np.load("./data/train_matrix.npy")
-    dimensions = 3
-    training_matrix = dimension_reduction(
-        training_matrix, train_label=training_labels, n_dimensions=dimensions
-    )
+    training_matrix, _ = dimension_reduction(
+        training_matrix, train_label=training_labels)
+
     """
     best_ccp_alpha = find_good_ccp_alpha(
         training_matrix, training_labels, classifier_settings

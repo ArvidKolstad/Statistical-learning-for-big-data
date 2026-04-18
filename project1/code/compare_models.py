@@ -7,12 +7,26 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 from multilayer_preceptron import ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
 from kNNClassifier import tune_knn
+
+
+# Results Function
+def find_results(name, predictions, test_labels):
+    accuracy = accuracy_score(test_labels, predictions)
+    errors = (predictions != test_labels).sum()
+
+    cm = confusion_matrix(test_labels, predictions)
+    ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap="Blues")
+    plt.title(f"{name}Confusion Matrix")
+    plt.show()
+
+    return accuracy, errors
 
 
 # Comparisons
@@ -25,10 +39,6 @@ def main():
     test_data = np.load("./data/test_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
 
-    # print("Train shape:", train_data.shape)
-    # print("Test shape:", test_data.shape)
-    # print("Label distribution:", np.unique(train_labels, return_counts=True))
-
     # Dimension reduction
     reduced_train, reduced_test = dimension_reduction(
         train_data,
@@ -38,12 +48,6 @@ def main():
     )
 
     # kNN
-    # knn = KNeighborsClassifier(n_neighbors=3)
-    # knn.fit(reduced_train, train_labels)
-
-    # knn_pred = knn.predict(reduced_test)
-    # knn_acc = accuracy_score(test_labels, knn_pred)
-
     knn = tune_knn(
         reduced_train,
         train_labels,
@@ -54,10 +58,6 @@ def main():
     knn_pred = knn.predict(reduced_test)
     knn_acc = accuracy_score(test_labels, knn_pred)
 
-    # BUG (kNNClassifier.py):
-    # All träningskod körs vid import → ger sid-effekter (plots)
-    # Flytta allt till:
-    # if __name__ == "__main__":
 
     # Random Forest
     rf = RandomForestClassifier(
@@ -68,7 +68,23 @@ def main():
 
     rf.fit(reduced_train, train_labels)
     rf_pred = rf.predict(reduced_test)
-    rf_acc = accuracy_score(test_labels, rf_pred)
+
+    # rf_acc = accuracy_score(test_labels, rf_pred)
+
+    # # Random Forest Confusion Matrix
+    # cm_rf = confusion_matrix(test_labels, rf_pred)
+
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm_rf)
+    # disp.plot(cmap="Blues")
+    # plt.title("Random Forest Confusion Matrix")
+    # plt.show()
+
+    # # Antal fel
+    # rf_errors = (rf_pred != test_labels).sum()
+
+    rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
+    print(rf_acc)
+    print(rf_err)
 
     # NOTE: oob_score_ finns bara när bootstrap=True och oob_score=True
 
@@ -82,15 +98,25 @@ def main():
 
     mlp.fit(reduced_train, train_labels, epochs=5)
 
+    # Accuary 
     mlp_pred = mlp.predict(reduced_test)
-    mlp_acc = accuracy_score(test_labels, mlp_pred)
- 
-    # # Results
-    # print("y_test shape:", test_labels.shape)
-    # print("y_pred shape:", knn_pred.shape)
-    # print("unique labels:", np.unique(test_labels))
-    # print("unique preds:", np.unique(knn_pred))
+    # mlp_acc = accuracy_score(test_labels, mlp_pred)
 
+    # # MLP Confusion matrix
+    # cm_mlp = confusion_matrix(test_labels, mlp_pred)
+
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm_mlp)
+    # disp.plot(cmap="Blues")
+    # plt.title("MLP Confusion Matrix")
+    # plt.show()
+ 
+    # # Antal fel
+    # mlp_errors = (mlp_pred != test_labels).sum()
+
+    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
+    print(mlp_acc)
+    print(mlp_err)
+   
     results = {
         "kNN": knn_acc,
         "Random Forest": rf_acc,
