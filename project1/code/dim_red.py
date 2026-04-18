@@ -45,7 +45,7 @@ def dimension_reduction(
         if train_label is None:
             raise ValueError("train_label must be provided for plotting")
 
-        if n_dim >= 2:
+        if n_dim == 2:
             plt.figure(figsize=(12, 8))
             plt.scatter(
                 train_reduced[:, 0], 

@@ -10,8 +10,11 @@ from sklearn.model_selection import StratifiedKFold
 
 class ReducedDimDataset(Dataset):
     def __init__(self, inputs, labels):
-        self.inputs = torch.tensor(inputs)
-        self.labels = torch.tensor(labels)
+        self.inputs = torch.tensor(inputs, dtype=torch.float32) # La till float
+        self.labels = torch.tensor(labels).long() # La till long
+
+        # Normalisering
+        self.inputs = (self.inputs - self.inputs.mean()) / (self.inputs.std() + 1e-8)
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -23,10 +26,12 @@ class ReducedDimDataset(Dataset):
 class MultilayerPerception(nn.Module):
     def __init__(self, layer_dim, act_func, dropout_rate=0.3):
         super().__init__()
+
         self.layer_count = len(layer_dim)
         self.act_func_length = len(act_func)
 
         assert self.layer_count == self.act_func_length + 1
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         layers = []
@@ -38,8 +43,12 @@ class MultilayerPerception(nn.Module):
 
         self.network = nn.Sequential(*layers)
 
+        # Spara att den är tränad
+        self._is_trained = False
+
     def forward(self, x):
         return self.network(x)
+
 
     def train_params(
         self,
@@ -53,47 +62,100 @@ class MultilayerPerception(nn.Module):
     ):
 
         self.to(self.device)
-        params = self.state_dict()
-        best_val_loss = np.inf
+        # params = self.state_dict()
+        # best_val_loss = np.inf
+
+        # Accuracy istället
+        best_val_acc = 0.0
+        best_state = self.state_dict()
 
         for epoch in range(epochs):
+            total = 0
+            correct = 0
+
             self.train()
             running_loss = 0.0
 
             for inputs, labels in train_data_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
+
                 optimizer.zero_grad(set_to_none=True)
+
                 outputs = self(inputs)
                 loss = loss_function(outputs, labels)
+
                 loss.backward()
+                optimizer.step() # La till detta
+
                 running_loss += loss.item()
-            avg_t_loss = running_loss / len(train_data_loader)
-            avg_v_loss = self.validate_model(val_data_loader, loss_function)
-            scheduler.step(avg_v_loss)
-            if best_val_loss > avg_v_loss:
-                best_val_loss = avg_v_loss
-                if save_model:
-                    params = self.state_dict()
+
+                # Nytt
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+            # avg_t_loss = running_loss / len(train_data_loader)
+            # avg_v_loss = self.validate_model(val_data_loader, loss_function)
+
+            # scheduler.step(avg_v_loss)
+
+            # if best_val_loss > avg_v_loss:
+            #     best_val_loss = avg_v_loss
+            #     if save_model:
+            #         params = self.state_dict()
+            # print(
+            #     f"Epoch {epoch +1}/{epochs}, Training loss: {avg_t_loss:.5f}, Validation loss: {avg_v_loss:.5f}"
+            # )
+
+            train_acc = correct / total
+
+            # Validering
+            val_acc = self.validate_model(val_data_loader)
+
+            scheduler.step(1 - val_acc)  # ReduceLROnPlateau (högre är bättre → invertera)
+
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                best_state = self.state_dict()
+
             print(
-                f"Epoch {epoch +1}/{epochs}, Training loss: {avg_t_loss:.5f}, Validation loss: {avg_v_loss:.5f}"
+                f"Epoch {epoch+1}/{epochs} | "
+                f"Train acc: {train_acc:.4f} | "
+                f"Val acc: {val_acc:.4f}"
             )
 
         if save_model:
             torch.save(params, "./saved_models/mlp")
-        return best_val_loss
 
-    def validate_model(self, val_loader, loss_function):
+        self.load_state_dict(best_state)
+        return best_val_acc
+
+    def validate_model(self, val_loader):
         self.eval()
-        val_loss = 0.0
+        # val_loss = 0.0
+
+        correct = 0
+        total = 0
 
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
+
                 outputs = self(inputs)
-                loss = loss_function(outputs.squeeze(1), labels)
-                val_loss += loss.item()
-        avg_loss = val_loss / len(val_loader)
-        return avg_loss
+
+                # # loss = loss_function(outputs.squeeze(1), labels)
+                # loss = loss_function(outputs, labels) # Tog bort squeeze
+
+                # val_loss += loss.item()
+                _, predicted = torch.max(outputs, 1)
+
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        # avg_loss = val_loss / len(val_loader)
+        accuracy = correct / total
+        # return avg_loss
+        return accuracy
 
 
 def get_activation_function(activation_name):
@@ -127,22 +189,29 @@ def kCV(
 
     skf = StratifiedKFold(n_splits=k, shuffle=True)
     fold_score = []
-    matrixes = [data[0] for data in data_set]
-    labels = [data[1] for data in data_set]
+
+    # matrixes = [data[0] for data in data_set]
+    # labels = [data[1] for data in data_set]
+    matrixes = data_set.inputs.detach().cpu().numpy()
+    labels = data_set.labels.detach().cpu().numpy()
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(matrixes, labels)):
         print(f"Fold: {fold}")
+
         train_data_loader = DataLoader(
             data_set, batch_size=100, sampler=SubsetRandomSampler(train_idx)
         )
+
         val_data_loader = DataLoader(
             data_set, batch_size=256, sampler=SubsetRandomSampler(val_idx)
         )
+
         training_settings["train_data_loader"] = train_data_loader
         training_settings["val_data_loader"] = val_data_loader
 
-        model = model_class(**network_layout)
-        model.to(model.device)
+        # model = model_class(**network_layout)
+        # model.to(model.device)
+        model = model_class(**network_layout).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
         optimizer_settings["params"] = model.parameters()
         opt_func = optimizer(**optimizer_settings)
@@ -159,23 +228,31 @@ def kCV(
 
 
 # tänkte att man kunde göra en funktion för hyperparameteroptimeringen eftersom de är i olika dicts så kan man säga vilken dict de befinner sig genom get_dict och sen använda den i hyper_parameter_opt för att skriva mindre kod.
-def get_dict(module):
-    if module == "train":
-        return 0
-    elif module == "optimizer":
-        return 1
-    elif module == "scheduler":
-        return 2
-    else:
-        raise ValueError("Module doesn't exist")
+# def get_dict(module):
+#     if module == "train":
+#         return 0
+#     elif module == "optimizer":
+#         return 1
+#     elif module == "scheduler":
+#         return 2
+#     else:
+#         raise ValueError("Module doesn't exist")
 
 
-def hyper_parameter_opt(hyper_parameter, parameter_range, module, params):
-    print("hi")
+# def hyper_parameter_opt(hyper_parameter, parameter_range, module, params):
+#     print("hi")
 
 
 def main():
-    input_layer = 3
+    training_matrix = np.load("./data/train_matrix.npy")
+    training_labels = np.load("./data/train_labels.npy")
+
+    red_training_matrix, _ = dimension_reduction(
+        training_matrix, 
+        train_label=training_labels
+    )
+
+    input_layer = red_training_matrix.shape[1] # Ändrat
     classes = 10
     data_batches = 10
 
@@ -184,20 +261,27 @@ def main():
         "act_func": ["ReLU", "ReLU", "ReLU", "ReLU", "ReLU", "ReLU", "identity"],
         "dropout_rate": 0.2,
     }
+
     optimizer = Adam
     optimizer_settings = {
         "params": None,
         "lr": 0.001,
         "weight_decay": 1e-4,
     }
+
     scheduler = ReduceLROnPlateau
     scheduler_settings = {"optimizer": None, "patience": 5, "factor": 0.5}
 
-    training_matrix = np.load("./data/train_matrix.npy")
-    training_labels = np.load("./data/train_labels.npy")
-    red_training_matrix = dimension_reduction(
-        training_matrix, train_label=training_labels, n_dimensions=input_layer
-    )
+    # training_matrix = np.load("./data/train_matrix.npy")
+    # training_labels = np.load("./data/train_labels.npy")
+
+    # red_training_matrix, _ = dimension_reduction(
+    #     training_matrix, 
+    #     train_label=training_labels
+    # )
+
+    # input_layer = red_training_matrix.shape[1] # Ändrat
+
     train_settings = {
         "epochs": 100,
         "train_data_loader": None,
@@ -211,6 +295,7 @@ def main():
         red_training_matrix,
         training_labels,
     )
+
     score = kCV(
         data_batches,
         MultilayerPerception,
@@ -222,6 +307,7 @@ def main():
         scheduler,
         scheduler_settings,
     )
+
     print(score)
 
 
