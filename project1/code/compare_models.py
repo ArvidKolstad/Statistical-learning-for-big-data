@@ -9,11 +9,13 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
+# from sklearn.ensemble import RandomForestClassifier
 
 from multilayer_preceptron import ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
 from kNNClassifier import tune_knn
+from random_forest import train_rfc
+from config_rf import classifier_settings
 
 
 # Results Function
@@ -56,39 +58,21 @@ def main():
     )
 
     knn_pred = knn.predict(reduced_test)
-    knn_acc = accuracy_score(test_labels, knn_pred)
+    knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
 
 
     # Random Forest
-    rf = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=None,
-        random_state=42
+    rf = train_rfc(
+        reduced_train,
+        train_labels,
+        classifier_settings
     )
 
     rf.fit(reduced_train, train_labels)
     rf_pred = rf.predict(reduced_test)
-
-    # rf_acc = accuracy_score(test_labels, rf_pred)
-
-    # # Random Forest Confusion Matrix
-    # cm_rf = confusion_matrix(test_labels, rf_pred)
-
-    # disp = ConfusionMatrixDisplay(confusion_matrix=cm_rf)
-    # disp.plot(cmap="Blues")
-    # plt.title("Random Forest Confusion Matrix")
-    # plt.show()
-
-    # # Antal fel
-    # rf_errors = (rf_pred != test_labels).sum()
-
     rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
-    print(rf_acc)
-    print(rf_err)
 
-    # NOTE: oob_score_ finns bara när bootstrap=True och oob_score=True
 
-    # MLP
     # MLP
     mlp = MultilayerPerception(
         layer_dim=[reduced_train.shape[1], 128, 64, 10],
@@ -97,40 +81,31 @@ def main():
     )
 
     mlp.fit(reduced_train, train_labels, epochs=5)
-
-    # Accuary 
     mlp_pred = mlp.predict(reduced_test)
-    # mlp_acc = accuracy_score(test_labels, mlp_pred)
-
-    # # MLP Confusion matrix
-    # cm_mlp = confusion_matrix(test_labels, mlp_pred)
-
-    # disp = ConfusionMatrixDisplay(confusion_matrix=cm_mlp)
-    # disp.plot(cmap="Blues")
-    # plt.title("MLP Confusion Matrix")
-    # plt.show()
- 
-    # # Antal fel
-    # mlp_errors = (mlp_pred != test_labels).sum()
-
     mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
-    print(mlp_acc)
-    print(mlp_err)
-   
-    results = {
+
+
+    # Results
+    results_acc = {
         "kNN": knn_acc,
         "Random Forest": rf_acc,
         "MLP": mlp_acc,
     }
 
-    for name, acc in results.items():
-        print(f"{name}: {acc:.4f}")
+    results_err = {
+        "kNN": knn_err,
+        "Random Forest": rf_err,
+        "MLP": mlp_err
+    }
 
-    # Plotting
-    plt.bar(results.keys(), results.values())
-    plt.ylabel("Accuracy")
-    plt.title("Model comparison on MNIST")
-    plt.show()
+    print("\nAccuracy")
+    for name, acc in results_acc.items():
+        print(f"{name:<15}: {acc:.4f}")
+
+    print(f"\nNumber of errors out of {len(test_labels)}")
+    for name, err in results_err.items():
+        print(f"{name:<15}: {err}")
+
 
 
 if __name__ == "__main__":

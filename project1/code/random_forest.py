@@ -6,6 +6,30 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 
+# Wrapper
+class MyRandomForest:
+    def __init__(self, **settings):
+        self.model = RandomForestClassifier(**settings)
+
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        return self.model.predict(X)
+
+    def score(self, X, y):
+        return self.model.score(X, y)
+
+    def save(self, path):
+        with open(path, "wb") as f:
+            pkl.dump(self.model, f)
+
+    def load(self, path):
+        with open(path, "rb") as f:
+            self.model = pkl.load(f)
+        return self
+
 
 def train_rfc(
     inputs: np.ndarray,
@@ -14,18 +38,23 @@ def train_rfc(
     save_model=None,
 ):
 
-    classifier = RandomForestClassifier(**settings)
-    classifier.fit(inputs, labels)
+    # classifier = RandomForestClassifier(**settings)
+    # classifier.fit(inputs, labels)
 
-    classification_score = classifier.oob_score_
+    # classification_score = classifier.oob_score_
+
+    rf = MyRandomForest(**settings)
+    rf.fit(inputs, labels)
 
     if save_model:
-        params = classifier.get_params()
-        with open(save_model, "wb") as handle:
-            pkl.dump(params, handle)
-        with open(save_model + "settings", "wb") as handle:
-            pkl.dump(settings, handle)
-    return classification_score
+        # params = classifier.get_params()
+        # with open(save_model, "wb") as handle:
+        #     pkl.dump(params, handle)
+        # with open(save_model + "settings", "wb") as handle:
+        #     pkl.dump(settings, handle)
+        rf.save(save_model)
+
+    return rf #classification_score
 
 
 def find_good_ccp_alpha(input_matrix, labels, settings) -> float:
@@ -156,7 +185,8 @@ def main():
         classifier_settings,
         save_model="./saved_models/random_forest",
     )
-    print(score)
+    # print(score)
+    print("RF trained")
 
 
 if __name__ == "__main__":
