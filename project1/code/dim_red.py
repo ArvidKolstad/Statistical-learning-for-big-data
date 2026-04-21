@@ -5,14 +5,14 @@ from sklearn.manifold import TSNE
 
 
 def dimension_reduction(
-    train_data, 
+    train_data,
     test_data=None,
-    train_label=None, 
+    train_label=None,
     tsne=False,
-    n_dim=2, 
+    n_dim=2,
     n_dim_pca=0.95,
-    plot=False, 
-    save_path=None
+    plot=False,
+    save_path=None,
 ):
 
     pca = PCA(n_components=n_dim_pca, random_state=42)
@@ -25,8 +25,8 @@ def dimension_reduction(
             perplexity=30,
             learning_rate="auto",
             init="pca",
-            random_state=42
-)
+            random_state=42,
+        )
         train_reduced = tsne.fit_transform(train_pca)
         test_reduced = None
 
@@ -48,18 +48,18 @@ def dimension_reduction(
         if n_dim == 2:
             plt.figure(figsize=(12, 8))
             plt.scatter(
-                train_reduced[:, 0], 
-                train_reduced[:, 1], 
-                c=train_label, 
-                cmap="jet"
+                train_reduced[:, 0], train_reduced[:, 1], c=train_label, cmap="jet"
             )
             plt.colorbar()
             plt.axis("off")
             plt.title("2D projection")
 
             if save_path:
-                plt.savefig(save_path.replace(".png", f"_{suffix}_2d.png"),
-                        dpi=300, bbox_inches="tight")
+                plt.savefig(
+                    save_path.replace(".png", f"_{suffix}_2d.png"),
+                    dpi=300,
+                    bbox_inches="tight",
+                )
 
             plt.show()
 
@@ -79,11 +79,13 @@ def dimension_reduction(
             ax.set_title("3D projection")
 
             if save_path:
-                plt.savefig(save_path.replace(".png", f"_{suffix}_3d.png"), 
-                            dpi=300, bbox_inches="tight")
+                plt.savefig(
+                    save_path.replace(".png", f"_{suffix}_3d.png"),
+                    dpi=300,
+                    bbox_inches="tight",
+                )
 
             plt.show()
-
 
     return train_reduced, test_reduced
 
@@ -107,3 +109,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

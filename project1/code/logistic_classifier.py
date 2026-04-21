@@ -57,6 +57,7 @@ def tune_dim_red(x_train, y_train, n_dims, n_folds):
 
 def main():
     training_labels = np.load("./data/train_labels.npy")
+    #training_labels = np.load("./data/train_labels_0.5_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")

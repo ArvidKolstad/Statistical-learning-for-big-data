@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 
-# Wrapper
+
 class MyRandomForest:
     def __init__(self, **settings):
         self.model = RandomForestClassifier(**settings)
@@ -38,23 +38,13 @@ def train_rfc(
     save_model=None,
 ):
 
-    # classifier = RandomForestClassifier(**settings)
-    # classifier.fit(inputs, labels)
-
-    # classification_score = classifier.oob_score_
-
     rf = MyRandomForest(**settings)
     rf.fit(inputs, labels)
 
     if save_model:
-        # params = classifier.get_params()
-        # with open(save_model, "wb") as handle:
-        #     pkl.dump(params, handle)
-        # with open(save_model + "settings", "wb") as handle:
-        #     pkl.dump(settings, handle)
         rf.save(save_model)
 
-    return rf #classification_score
+    return rf
 
 
 def find_good_ccp_alpha(input_matrix, labels, settings) -> float:
@@ -158,7 +148,8 @@ def main():
     training_labels = np.load("./data/train_labels.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     training_matrix, _ = dimension_reduction(
-        training_matrix, train_label=training_labels)
+        training_matrix, train_label=training_labels
+    )
 
     """
     best_ccp_alpha = find_good_ccp_alpha(
