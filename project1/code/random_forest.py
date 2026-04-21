@@ -42,11 +42,6 @@ def train_rfc(
     rf.fit(inputs, labels)
 
     if save_model:
-        # params = classifier.get_params()
-        # with open(save_model, "wb") as handle:
-        #     pkl.dump(params, handle)
-        # with open(save_model + "settings", "wb") as handle:
-        #     pkl.dump(settings, handle)
         rf.save(save_model)
 
     return rf

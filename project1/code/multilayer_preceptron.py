@@ -263,19 +263,24 @@ def hyper_parameter_opt(
 ):
 
     print("Now training for " + hyper_parameter)
-    original_value = params[get_dict(module)][hyper_parameter]
+    if isinstance(params[get_dict(module)][hyper_parameter], list or np.ndarray):
+        original_value = params[get_dict(module)][hyper_parameter].copy()
+    else:
+        original_value = params[get_dict(module)][hyper_parameter]
+
+    original_data_set = params[get_dict("data")]
     color = ["red", "blue"]
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
 
     input_dim = None
-    x = None
+    x1 = None
+    value = None
     scores = []
 
     for idx, value in enumerate(parameter_values):
 
         if (hyper_parameter == "layer_dim") and data_set:
-            print("inside if")
             red_training_matrix, _ = dimension_reduction(
                 data_set[0], train_label=data_set[1], n_dim_pca=value
             )
@@ -288,21 +293,28 @@ def hyper_parameter_opt(
                 red_training_matrix,
                 data_set[1],
             )
+
             params[get_dict("data")] = data_set_train
 
         params[get_dict(module)][hyper_parameter] = value
         score = kCV(*params)
         scores.append(score)
         if (hyper_parameter == "layer_dim") and data_set:
-            x = np.ones_like(score) * input_dim
+            x1 = np.ones_like(score) * input_dim
         else:
-            x = np.ones_like(score) * value
+            x1 = np.ones_like(score) * value
 
-        ax1.scatter(x, score, color=color[idx % 2])
+        ax1.scatter(x1, score, color=color[idx % 2])
 
         print(f"Done hyper training: {idx+1}/{len(parameter_values)}")
 
-    ax2.boxplot(scores, tick_labels=x)
+    if (hyper_parameter == "layer_dim") and data_set:
+        x2 = np.ones(len(scores)) * input_dim
+        params[get_dict("data")] = original_data_set
+    else:
+        x2 = np.ones(len(scores)) * value
+
+    ax2.boxplot(scores, tick_labels=x2)
     ax2.set_title(f"Hyper parameter: {hyper_parameter}")
     fig2.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter + "_boxplot")
 
@@ -323,7 +335,7 @@ def main():
 
     input_layer = red_training_matrix.shape[1]
     classes = 10
-    data_batches = 2
+    data_batches = 10
 
     layout = {
         "layer_dim": [input_layer, 256, 128, 64, 32, classes],
@@ -366,6 +378,7 @@ def main():
         scheduler_settings,
     ]
 
+    #
     hyper_parameter_opt(
         "layer_dim",
         [0.99, 0.90, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10],
