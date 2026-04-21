@@ -15,7 +15,7 @@ def classifier_preformance(classifier, x_test, y_test):
     accuracy = accuracy_score(y_pred, y_test)
     errors = (y_pred != y_test).sum()
     print(f'Model accuracy: {accuracy}')
-    print(f'No. model errrors: {errors}')
+    print(f'No. model errors: {errors}')
     plt.show()
 
 def tune_knn(x_train, y_train, k_values, n_folds):
@@ -30,6 +30,7 @@ def tune_knn(x_train, y_train, k_values, n_folds):
     plt.plot(k_values, cv_scores)
     plt.xlabel('k')
     plt.ylabel('CV Accuracy')
+    plt.tight_layout()
     plt.grid()
 
     # find best k
@@ -68,6 +69,7 @@ def tune_knn_and_dim_red(x_train, y_train, k_values, n_folds, n_dims):
     plt.xlabel("k")
     plt.ylabel("n_dim")
     plt.title("kNN accuracy over k and PCA dimensions")
+    plt.tight_layout()
     plt.show()
 
     # refit best model
@@ -78,13 +80,13 @@ def tune_knn_and_dim_red(x_train, y_train, k_values, n_folds, n_dims):
     return best_knn, best_dim
 
 def main():
-    #training_labels = np.load("./data/train_labels.npy")
-    training_labels = np.load("./data/train_labels_0.1_mislabel.npy")
+    training_labels = np.load("./data/train_labels.npy")
+    #training_labels = np.load("./data/train_labels_0.5_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
 
-    knn, n_dim = tune_knn_and_dim_red(training_matrix, training_labels, range(1,11), 10, range(10,101,10))
+    knn, n_dim = tune_knn_and_dim_red(training_matrix, training_labels, range(20,31), 10, range(10,101,10))
 
     training_matrix, test_matrix = dimension_reduction(
         training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
