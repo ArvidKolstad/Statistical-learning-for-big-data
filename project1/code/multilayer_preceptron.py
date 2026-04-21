@@ -103,8 +103,8 @@ class MultilayerPerception(nn.Module):
                 1 - val_acc
             )  # ReduceLROnPlateau (högre är bättre → invertera)
 
-            if best_val_acc < train_acc:
-                best_val_acc = train_acc
+            if best_val_acc < val_acc:
+                best_val_acc = val_acc
                 if save_model:
                     params = self.state_dict()
 
@@ -208,7 +208,7 @@ def kCV(
     labels = data_set.labels.detach().cpu().numpy()
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(matrixes, labels)):
-        print(f"Fold: {fold}")
+        print(f"Fold: {fold +1 }/{k}")
 
         train_data_loader = DataLoader(
             data_set, batch_size=100, sampler=SubsetRandomSampler(train_idx)
@@ -235,12 +235,14 @@ def kCV(
 
         score = model.train_params(**training_settings)
         fold_score.append(score)
-        print(score)
+        print(f"Best val score: {score}")
     return fold_score
 
 
 def get_dict(module):
-    if module == "network":
+    if module == "data":
+        return 2
+    elif module == "network":
         return 3
     elif module == "train":
         return 4
@@ -253,23 +255,61 @@ def get_dict(module):
 
 
 def hyper_parameter_opt(
-    hyper_parameter: str, parameter_values: list, module: str, params: list
+    hyper_parameter: str,
+    parameter_values: list,
+    module: str,
+    params: list,
+    data_set=None,
 ):
+
     print("Now training for " + hyper_parameter)
     original_value = params[get_dict(module)][hyper_parameter]
     color = ["red", "blue"]
-    fig, ax = plt.subplots()
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
+
+    input_dim = None
+    x = None
+    scores = []
+
     for idx, value in enumerate(parameter_values):
+
+        if (hyper_parameter == "layer_dim") and data_set:
+            print("inside if")
+            red_training_matrix, _ = dimension_reduction(
+                data_set[0], train_label=data_set[1], n_dim_pca=value
+            )
+            input_dim = red_training_matrix.shape[1]
+            new_layout = original_value.copy()
+            new_layout[0] = input_dim
+            value = new_layout
+
+            data_set_train = ReducedDimDataset(
+                red_training_matrix,
+                data_set[1],
+            )
+            params[get_dict("data")] = data_set_train
+
         params[get_dict(module)][hyper_parameter] = value
         score = kCV(*params)
-        x = np.ones_like(score) * value
-        ax.scatter(x, score, color=color[idx % 2])
+        scores.append(score)
+        if (hyper_parameter == "layer_dim") and data_set:
+            x = np.ones_like(score) * input_dim
+        else:
+            x = np.ones_like(score) * value
+
+        ax1.scatter(x, score, color=color[idx % 2])
 
         print(f"Done hyper training: {idx+1}/{len(parameter_values)}")
-    ax.grid()
-    ax.set_title(f"Hyper parameter: {hyper_parameter}")
-    fig.tight_layout()
-    fig.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter)
+
+    ax2.boxplot(scores, tick_labels=x)
+    ax2.set_title(f"Hyper parameter: {hyper_parameter}")
+    fig2.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter + "_boxplot")
+
+    ax1.grid()
+    ax1.set_title(f"Hyper parameter: {hyper_parameter}")
+    fig1.tight_layout()
+    fig1.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter)
     params[get_dict(module)][hyper_parameter] = original_value
 
 
@@ -283,7 +323,7 @@ def main():
 
     input_layer = red_training_matrix.shape[1]
     classes = 10
-    data_batches = 10
+    data_batches = 2
 
     layout = {
         "layer_dim": [input_layer, 256, 128, 64, 32, classes],
@@ -327,6 +367,14 @@ def main():
     ]
 
     hyper_parameter_opt(
+        "layer_dim",
+        [0.99, 0.90, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10],
+        "network",
+        params,
+        data_set=[training_matrix, training_labels],
+    )
+
+    hyper_parameter_opt(
         "dropout_rate",
         [0.0, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5],
         "network",
@@ -340,22 +388,6 @@ def main():
     )
     hyper_parameter_opt("patience", [3, 6, 8, 10, 15], "scheduler", params)
 
-
-"""
-    score = kCV(
-        data_batches,
-        MultilayerPerception,
-        data_set,
-        layout,
-        train_settings,
-        optimizer,
-        optimizer_settings,
-        scheduler,
-        scheduler_settings,
-    )
-
-    print(score)
-"""
 
 if __name__ == "__main__":
     main()
