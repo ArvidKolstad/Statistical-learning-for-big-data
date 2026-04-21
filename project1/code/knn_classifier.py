@@ -50,25 +50,25 @@ def tune_knn_and_dim_red(x_train, y_train, k_values, n_folds, n_dims):
             knn = KNeighborsClassifier(n_neighbors=k)
             scores = cross_val_score(knn, x_reduced, y_train, cv=n_folds, scoring="accuracy")
             results[(n_dim, k)] = scores.mean()
-            print(f"n_dim={n_dim}, k={k}: {scores.mean():.4f}")
+            # print(f"n_dim={n_dim}, k={k}: {scores.mean():.4f}")
 
     # find best combination
     best_dim, best_k = max(results, key=results.get)
-    print(f"\nBest n_dim={best_dim}, best k={best_k}, accuracy={results[(best_dim, best_k)]:.4f}")
+    # print(f"\nBest n_dim={best_dim}, best k={best_k}, accuracy={results[(best_dim, best_k)]:.4f}")
 
     # plot heatmap
     dims_list = list(n_dims)
     k_list = list(k_values)
     grid = np.array([[results[(d, k)] for k in k_list] for d in dims_list])
 
-    plt.figure(figsize=(10, 6))
-    plt.imshow(grid, aspect="auto", cmap="viridis",
-               extent=[k_list[0], k_list[-1], dims_list[-1], dims_list[0]])
-    plt.colorbar(label="CV Accuracy")
-    plt.xlabel("k")
-    plt.ylabel("n_dim")
-    plt.title("kNN accuracy over k and PCA dimensions")
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # plt.imshow(grid, aspect="auto", cmap="viridis",
+    #            extent=[k_list[0], k_list[-1], dims_list[-1], dims_list[0]])
+    # plt.colorbar(label="CV Accuracy")
+    # plt.xlabel("k")
+    # plt.ylabel("n_dim")
+    # plt.title("kNN accuracy over k and PCA dimensions")
+    # plt.show()
 
     # refit best model
     x_best, _ = dimension_reduction(x_train, n_dim_pca=best_dim)

@@ -1,21 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# For MLP
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 
 from multilayer_preceptron import ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
-from kNNClassifier import tune_knn
+from knn_classifier import tune_knn_and_dim_red
 from random_forest import train_rfc
 from config_rf import classifier_settings
+from logistic_classifier import tune_dim_red
+
 
 
 # Results Function
@@ -50,11 +47,18 @@ def main():
     )
 
     # kNN
-    knn = tune_knn(
-        reduced_train,
+    knn, best_dim = tune_knn_and_dim_red(
+        train_data,
         train_labels,
         k_values=range(1, 6),
-        n_folds=2
+        n_folds=2,
+        n_dims=range(10, 101, 10)
+    )
+
+    reduced_train, reduced_test = dimension_reduction(
+        train_data,
+        test_data=test_data,
+        n_dim_pca=best_dim
     )
 
     knn_pred = knn.predict(reduced_test)
@@ -68,7 +72,7 @@ def main():
         classifier_settings
     )
 
-    rf.fit(reduced_train, train_labels)
+    # rf.fit(reduced_train, train_labels)
     rf_pred = rf.predict(reduced_test)
     rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
@@ -85,17 +89,39 @@ def main():
     mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
 
+    # Logistic Regression
+    lr, best_dim_lr, scaler = tune_dim_red(
+        train_data,
+        train_labels,
+        n_dims=range(10, 151, 10),
+        n_folds=2
+    )
+
+    reduced_train_lr, reduced_test_lr = dimension_reduction(
+        train_data,
+        test_data=test_data,
+        n_dim_pca=best_dim_lr
+    )
+
+    reduced_test_lr = scaler.transform(reduced_test_lr)
+
+    lr_pred = lr.predict(reduced_test_lr)
+    lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
+
+
     # Results
     results_acc = {
         "kNN": knn_acc,
         "Random Forest": rf_acc,
         "MLP": mlp_acc,
+        "LogReg": lr_acc
     }
 
     results_err = {
         "kNN": knn_err,
         "Random Forest": rf_err,
-        "MLP": mlp_err
+        "MLP": mlp_err,
+        "LogReg": lr_err
     }
 
     print("\nAccuracy")
