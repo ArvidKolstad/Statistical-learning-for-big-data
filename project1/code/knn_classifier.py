@@ -78,12 +78,13 @@ def tune_knn_and_dim_red(x_train, y_train, k_values, n_folds, n_dims):
     return best_knn, best_dim
 
 def main():
-    training_labels = np.load("./data/train_labels.npy")
+    #training_labels = np.load("./data/train_labels.npy")
+    training_labels = np.load("./data/train_labels_0.1_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
 
-    knn, n_dim = tune_knn_and_dim_red(training_matrix, training_labels, range(1,10), 10, range(10,101,10))
+    knn, n_dim = tune_knn_and_dim_red(training_matrix, training_labels, range(1,11), 10, range(10,101,10))
 
     training_matrix, test_matrix = dimension_reduction(
         training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
