@@ -171,7 +171,7 @@ def main():
         "max_samples": 0.98,
     }
 
-    training_labels = np.load("./data/train_labels_0.3_mislabel.npy")
+    training_labels = np.load("./data/train_labels_0.5_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     # training_matrix, _ = dimension_reduction(
     #     training_matrix, train_label=training_labels
@@ -204,17 +204,19 @@ def main():
         training_matrix,
         training_labels,
         classifier_settings,
-        save_model="./saved_models/random_forest_moderate",
+        save_model=None,
     )
     print(score)
 
-    _, best_dim = tune_rf_and_dim(
+    best_model, best_dim = tune_rf_and_dim(
         training_matrix, training_labels, range(10, 151, 10), classifier_settings
     )
 
-    np.save("./saved_models/random_forest_dim_moderate.npy", best_dim)
+    np.save("./saved_models/random_forest_dim_heavy.npy", best_dim)
 
-    with open("./saved_models/random_forest_settings_moderate.pkl", "wb") as f:
+    best_model.save("./saved_models/random_forest_heavy")
+
+    with open("./saved_models/random_forest_settings_heavy.pkl", "wb") as f:
         pkl.dump(classifier_settings, f)
 
     print("RF trained")

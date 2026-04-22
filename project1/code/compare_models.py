@@ -51,7 +51,6 @@ def main():
     train_labels_03 = np.load("./data/train_labels_0.3_mislabel.npy")
     train_labels_05 = np.load("./data/train_labels_0.5_mislabel.npy")
 
-
     test_data = np.load("./data/test_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
 
@@ -93,16 +92,12 @@ def main():
     )
 
     rf = RandomForest(**rf_settings)
-    rf.fit(reduced_train_rf, train_labels_05) 
+    rf.load("./saved_models/random_forest_heavy")
     rf_pred = rf.predict(reduced_test_rf)
 
     # Save Figure
     save_path_rf = "../figures/cm_rf_heavy.png"
-    rf_acc, rf_err = find_results(
-        "Random Forest ",
-        rf_pred,
-        test_labels,
-        save_path_rf)
+    rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels, save_path_rf)
 
     # Don't Save Figure
     # rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
@@ -115,7 +110,7 @@ def main():
     # _, reduced_test_mlp = dimension_reduction(
     #     train_data,
     #      test_data=test_data,
-    #      train_label=train_labels, 
+    #      train_label=train_labels,
     #      n_dim_pca=44
     # )
 
