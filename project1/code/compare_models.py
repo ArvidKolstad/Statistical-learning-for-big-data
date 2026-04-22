@@ -1,14 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle as pkl
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-from multilayer_preceptron import (
-    load_mlp_model,
-)  # ReducedDimDataset, MultilayerPerception
+from multilayer_preceptron import load_mlp_model
 from dim_red import dimension_reduction
 from knn_classifier import tune_knn_and_dim_red
 from random_forest import RandomForest  # train_rfc
@@ -48,106 +47,127 @@ def main():
     train_data = np.load("./data/train_matrix.npy")
     train_labels = np.load("./data/train_labels.npy")
 
+    train_labels_01 = np.load("./data/train_labels_0.1_mislabel.npy")
+    train_labels_03 = np.load("./data/train_labels_0.3_mislabel.npy")
+    train_labels_05 = np.load("./data/train_labels_0.5_mislabel.npy")
+
+
     test_data = np.load("./data/test_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
 
-    # kNN
-    knn, best_dim = tune_knn_and_dim_red(
-        train_data,
-        train_labels,
-        k_values=range(1, 6),
-        n_folds=2,
-        n_dims=range(10, 101, 10),
-    )
+    # # k NEAREST NEIGHBORS
+    # knn, best_dim = tune_knn_and_dim_red(
+    #     train_data,
+    #     train_labels,
+    #     k_values=range(1, 6),
+    #     n_folds=2,
+    #     n_dims=range(10, 101, 10),
+    # )
 
-    _, reduced_test = dimension_reduction(
-        train_data, test_data=test_data, n_dim_pca=best_dim
-    )
+    # _, reduced_test = dimension_reduction(
+    #     train_data, test_data=test_data, n_dim_pca=best_dim
+    # )
 
-    knn_pred = knn.predict(reduced_test)
+    # knn_pred = knn.predict(reduced_test)
 
-    # save_path_knn = "../figures/cm_knn.png"
-    # knn_acc, knn_err = find_results(
-    #     "kNN ",
-    #     knn_pred,
-    #     test_labels,
-    #     save_path_knn)
+    # # # Save Figure
+    # # save_path_knn = "../figures/cm_knn.png"
+    # # knn_acc, knn_err = find_results(
+    # #     "kNN ",
+    # #     knn_pred,
+    # #     test_labels,
+    # #     save_path_knn)
 
-    knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
+    # # Don't Save Figure
+    # knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
 
-    # Random Forest
-    rf = RandomForest().load("./saved_models/random_forest")
-    best_dim_rf = int(np.load("./saved_models/random_forest_dim.npy"))
+    # RANDOM FOREST
+    with open("./saved_models/random_forest_settings_heavy.pkl", "rb") as f:
+        rf_settings = pkl.load(f)
 
-    _, reduced_test_rf = dimension_reduction(
+    best_dim_rf = int(np.load("./saved_models/random_forest_dim_heavy.npy"))
+    print(best_dim_rf)
+
+    reduced_train_rf, reduced_test_rf = dimension_reduction(
         train_data, test_data=test_data, n_dim_pca=best_dim_rf
     )
 
+    rf = RandomForest(**rf_settings)
+    rf.fit(reduced_train_rf, train_labels_05) 
     rf_pred = rf.predict(reduced_test_rf)
 
-    # save_path_rf = "../figures/cm_rf.png"
-    # rf_acc, rf_err = find_results(
-    #     "Random Forest ",
-    #     rf_pred,
-    #     test_labels,
-    #     save_path_rf)
+    # Save Figure
+    save_path_rf = "../figures/cm_rf_heavy.png"
+    rf_acc, rf_err = find_results(
+        "Random Forest ",
+        rf_pred,
+        test_labels,
+        save_path_rf)
 
-    rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
+    # Don't Save Figure
+    # rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
-    # # MLP
-    mlp = load_mlp_model("./saved_models/mlp_settings", "./saved_models/mlp")
+    # # # MULTILAYER PERCEPTRON
+    # mlp = load_mlp_model(
+    #     "./saved_models/mlp_settings",
+    #      "./saved_models/mlp")
 
-    _, reduced_test_mlp = dimension_reduction(
-        train_data, test_data=test_data, train_label=train_labels, n_dim_pca=44
-    )
+    # _, reduced_test_mlp = dimension_reduction(
+    #     train_data,
+    #      test_data=test_data,
+    #      train_label=train_labels, 
+    #      n_dim_pca=44
+    # )
 
-    mlp.to(mlp.device)
-    mlp_pred = mlp.predict(reduced_test_mlp)
+    # mlp.to(mlp.device)
+    # mlp_pred = mlp.predict(reduced_test_mlp)
 
-    # save_path_mlp = "../figures/cm_mlp.png"
-    # mlp_acc, mlp_err = find_results(
-    #     "MLP ",
-    #     mlp_pred,
-    #     test_labels,
-    #     save_path_mlp)
+    # # save_path_mlp = "../figures/cm_mlp.png"
+    # # mlp_acc, mlp_err = find_results(
+    # #     "MLP ",
+    # #     mlp_pred,
+    # #     test_labels,
+    # #     save_path_mlp)
 
-    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
+    # mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
-    # Logistic Regression
-    lr, best_dim_lr, scaler = tune_dim_red(
-        train_data, train_labels, n_dims=range(10, 151, 10), n_folds=2
-    )
+    # # LOGISTIC REGRESSION
+    # lr, best_dim_lr, scaler = tune_dim_red(
+    #     train_data, train_labels, n_dims=range(10, 151, 10), n_folds=2
+    # )
 
-    _, reduced_test_lr = dimension_reduction(
-        train_data, test_data=test_data, n_dim_pca=best_dim_lr
-    )
+    # _, reduced_test_lr = dimension_reduction(
+    #     train_data, test_data=test_data, n_dim_pca=best_dim_lr
+    # )
 
-    scaled_reduced_test_lr = scaler.transform(reduced_test_lr)
+    # scaled_reduced_test_lr = scaler.transform(reduced_test_lr)
 
-    lr_pred = lr.predict(scaled_reduced_test_lr)
+    # lr_pred = lr.predict(scaled_reduced_test_lr)
 
-    # save_path_lr = "../figures/cm_lr.png"
-    # lr_acc, lr_err = find_results(
-    #     "Logistic Regression ",
-    #     lr_pred,
-    #     test_labels,
-    #     save_path_lr)
+    # # Save Figure
+    # # save_path_lr = "../figures/cm_lr.png"
+    # # lr_acc, lr_err = find_results(
+    # #     "Logistic Regression ",
+    # #     lr_pred,
+    # #     test_labels,
+    # #     save_path_lr)
 
-    lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
+    # # Don't Save Figure
+    # lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
 
     # Results
     results_acc = {
-        "kNN": knn_acc,
+        # "kNN": knn_acc,
         "Random Forest": rf_acc,
-        "MLP": mlp_acc,
-        "LogReg": lr_acc,
+        # "MLP": mlp_acc,
+        # "LogReg": lr_acc,
     }
 
     results_err = {
-        "kNN": knn_err,
+        # "kNN": knn_err,
         "Random Forest": rf_err,
-        "MLP": mlp_err,
-        "LogReg": lr_err,
+        # "MLP": mlp_err,
+        # "LogReg": lr_err,
     }
 
     print("\nAccuracy")
