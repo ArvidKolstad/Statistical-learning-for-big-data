@@ -91,6 +91,46 @@ def find_good_max_sample(
     return best_sample_frac
 
 
+def tune_rf_and_dim(inputs, labels, n_dims, settings):
+    results = {}
+
+    for n_dim in n_dims:
+        reduced_inputs, _ = dimension_reduction(
+            inputs,
+            train_label=labels,
+            n_dim_pca=n_dim
+        )
+
+        rf = RandomForestClassifier(**settings)
+
+        score = cross_val_score(
+            rf,
+            reduced_inputs,
+            labels,
+            cv=5,
+            scoring="accuracy"
+        )
+
+        results[n_dim] = score.mean()
+        print(f"dim={n_dim}: {score:.4f}")
+
+    best_dim = max(results, key=results.get)
+
+    reduced_inputs, _ = dimension_reduction(
+        inputs,
+        train_label=labels,
+        n_dim_pca=best_dim
+    )
+
+    best_rf = train_rfc(
+        reduced_inputs,
+        labels,
+        settings
+    )
+
+    return best_rf, best_dim
+
+
 def plot_accuracy_rate(
     inputs: np.ndarray,
     labels: np.ndarray,
@@ -147,36 +187,61 @@ def main():
 
     training_labels = np.load("./data/train_labels.npy")
     training_matrix = np.load("./data/train_matrix.npy")
-    training_matrix, _ = dimension_reduction(
-        training_matrix, train_label=training_labels
-    )
+    # training_matrix, _ = dimension_reduction(
+    #     training_matrix, train_label=training_labels
+    # )
 
-    """
     best_ccp_alpha = find_good_ccp_alpha(
-        training_matrix, training_labels, classifier_settings
+        training_matrix, 
+        training_labels, 
+        classifier_settings
     )
-    print(f"Best alpha: {best_ccp_alpha}")
+    # print(f"Best alpha: {best_ccp_alpha}")
     classifier_settings["ccp_alpha"] = best_ccp_alpha
 
     # print(training_matrix.shape)
-    find_good_max_sample(
-        training_matrix, training_labels, max_samples_range, classifier_settings
+    best_sample = find_good_max_sample(
+        training_matrix, 
+        training_labels, 
+        max_samples_range, 
+        classifier_settings
     )
-    plot_accuracy_rate(
-        training_matrix,
-        training_labels,
-        max_n_trees,
-        classifier_settings,
-        save_plot,
-    )
-    """
-    score = train_rfc(
-        training_matrix,
-        training_labels,
-        classifier_settings,
-        save_model="./saved_models/random_forest",
-    )
+
+    classifier_settings["max_samples"] = best_sample
+
+    # plot_accuracy_rate(
+    #     training_matrix,
+    #     training_labels,
+    #     max_n_trees,
+    #     classifier_settings,
+    #     save_plot,
+    # )
+    
+    # score = train_rfc(
+    #     training_matrix,
+    #     training_labels,
+    #     classifier_settings,
+    #     save_model="./saved_models/random_forest",
+    # )
     # print(score)
+
+    rf, best_dim = tune_rf_and_dim(
+        training_matrix,
+        training_labels,
+        range(10,151,10),
+        classifier_settings
+    )    
+
+    rf.save("./saved_models/random_forest")
+
+    np.save("./saved_models/random_forest_dim.npy", best_dim)
+
+    import pickle as pkl
+
+    with open("./saved_models/random_forest_settings.pkl", "wb") as f:
+        pkl.dump(classifier_settings, f)
+
+    
     print("RF trained")
 
 

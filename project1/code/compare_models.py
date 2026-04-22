@@ -9,14 +9,14 @@ from sklearn.preprocessing import StandardScaler
 from multilayer_preceptron import ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
 from knn_classifier import tune_knn_and_dim_red
-from random_forest import train_rfc
+from random_forest import MyRandomForest # train_rfc
 from config_rf import classifier_settings
 from logistic_classifier import tune_dim_red
 
 
 
 # Results Function
-def find_results(name, predictions, test_labels):
+def find_results(name, predictions, test_labels, save_path=None):
     accuracy = accuracy_score(test_labels, predictions)
     errors = (predictions != test_labels).sum()
 
@@ -24,6 +24,12 @@ def find_results(name, predictions, test_labels):
     ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap="Blues")
     plt.title(f"{name}Confusion Matrix")
     plt.show()
+
+    # Save Figure
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=300)
+
+    plt.close(fig)
 
     return accuracy, errors
 
@@ -38,13 +44,13 @@ def main():
     test_data = np.load("./data/test_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
 
-    # Dimension reduction
-    reduced_train, reduced_test = dimension_reduction(
-        train_data,
-        test_data=test_data,
-        train_label=train_labels,
-        n_dim_pca=50
-    )
+    # # Dimension reduction
+    # reduced_train, reduced_test = dimension_reduction(
+    #     train_data,
+    #     test_data=test_data,
+    #     train_label=train_labels,
+    #     n_dim_pca=50
+    # )
 
     # kNN
     knn, best_dim = tune_knn_and_dim_red(
@@ -55,7 +61,7 @@ def main():
         n_dims=range(10, 101, 10)
     )
 
-    reduced_train, reduced_test = dimension_reduction(
+    _ , reduced_test = dimension_reduction(
         train_data,
         test_data=test_data,
         n_dim_pca=best_dim
@@ -66,27 +72,29 @@ def main():
 
 
     # Random Forest
-    rf = train_rfc(
-        reduced_train,
-        train_labels,
-        classifier_settings
+    rf = MyRandomForest().load("./saved_models/random_forest")
+    best_dim_rf = int(np.load("./saved_models/random_forest_dim.npy"))
+
+    _ , reduced_test_rf = dimension_reduction(
+        train_data,
+        test_data=test_data,
+        n_dim_pca=best_dim_rf
     )
 
-    # rf.fit(reduced_train, train_labels)
-    rf_pred = rf.predict(reduced_test)
+    rf_pred = rf.predict(reduced_test_rf)
     rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
 
-    # MLP
-    mlp = MultilayerPerception(
-        layer_dim=[reduced_train.shape[1], 128, 64, 10],
-        act_func=["ReLU", "ReLU", "identity"],
-        dropout_rate=0.2
-    )
+    # # MLP
+    # mlp = MultilayerPerception(
+    #     layer_dim=[reduced_train.shape[1], 128, 64, 10],
+    #     act_func=["ReLU", "ReLU", "identity"],
+    #     dropout_rate=0.2
+    # )
 
-    mlp.fit(reduced_train, train_labels, epochs=5)
-    mlp_pred = mlp.predict(reduced_test)
-    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
+    # mlp.fit(reduced_train, train_labels, epochs=5)
+    # mlp_pred = mlp.predict(reduced_test)
+    # mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
 
     # Logistic Regression
@@ -97,15 +105,15 @@ def main():
         n_folds=2
     )
 
-    reduced_train_lr, reduced_test_lr = dimension_reduction(
+    _ , reduced_test_lr = dimension_reduction(
         train_data,
         test_data=test_data,
         n_dim_pca=best_dim_lr
     )
 
-    reduced_test_lr = scaler.transform(reduced_test_lr)
+    scaled_reduced_test_lr = scaler.transform(reduced_test_lr)
 
-    lr_pred = lr.predict(reduced_test_lr)
+    lr_pred = lr.predict(scaled_reduced_test_lr)
     lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
 
 
@@ -113,14 +121,14 @@ def main():
     results_acc = {
         "kNN": knn_acc,
         "Random Forest": rf_acc,
-        "MLP": mlp_acc,
+        # "MLP": mlp_acc,
         "LogReg": lr_acc
     }
 
     results_err = {
         "kNN": knn_err,
         "Random Forest": rf_err,
-        "MLP": mlp_err,
+        # "MLP": mlp_err,
         "LogReg": lr_err
     }
 

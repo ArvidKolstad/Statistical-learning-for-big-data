@@ -62,15 +62,31 @@ def main():
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
 
-    n_dim = tune_dim_red(training_matrix, training_labels, range(10,151,10), 10)
+    model, n_dim, scaler = tune_dim_red(
+        training_matrix, 
+        training_labels, 
+        range(10,151,10), 
+        10)
 
-    training_matrix, test_matrix = dimension_reduction(
-        training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
+    # training_matrix, test_matrix = dimension_reduction(
+    #     training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
 
-    model = LogisticRegression(solver='lbfgs', max_iter=1000)
-    model.fit(training_matrix, training_labels)
+    # model = LogisticRegression(solver='lbfgs', max_iter=1000)
+    # model.fit(training_matrix, training_labels)
 
-    classifier_preformance(model, test_matrix, test_labels)
+    # classifier_preformance(model, test_matrix, test_labels)
+
+    import pickle as pkl
+
+    with open("./saved_models/logreg.pkl", "wb") as f:
+        pkl.dump(model, f)
+
+    with open("./saved_models/logreg_scaler.pkl", "wb") as f:
+        pkl.dump(scaler, f)
+
+    np.save("./saved_models/logreg_dim.npy", n_dim)
+
+    print("Training complete")
 
 
 if __name__ == "__main__":

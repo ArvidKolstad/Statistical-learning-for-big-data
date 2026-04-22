@@ -85,12 +85,24 @@ def main():
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
 
-    knn, n_dim = tune_knn_and_dim_red(training_matrix, training_labels, range(20,31), 10, range(10,101,10))
+    knn, n_dim, best_k = tune_knn_and_dim_red(
+        training_matrix, 
+        training_labels, 
+        range(20,31), 
+        10, 
+        range(10,101,10))
 
-    training_matrix, test_matrix = dimension_reduction(
-        training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
+    # training_matrix, test_matrix = dimension_reduction(
+    #     training_matrix, test_data=test_matrix, n_dim_pca=n_dim)
     
-    classifier_preformance(knn, test_matrix, test_labels)
+    # classifier_preformance(knn, test_matrix, test_labels)
+
+    import pickle as pkl
+
+    with open("./saved_models/knn.pkl", "wb") as f:
+        pkl.dump(knn, f)
+
+    np.save("./saved_models/knn_dim.npy", best_dim)
 
 if __name__ == "__main__":
     main()
