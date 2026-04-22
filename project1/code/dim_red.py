@@ -9,7 +9,7 @@ def dimension_reduction(
     test_data=None,
     train_label=None,
     tsne=False,
-    n_dim=2,
+    n_dim=3,
     n_dim_pca=0.95,
     plot=False,
     save_path=None,
@@ -91,11 +91,11 @@ def dimension_reduction(
 
 
 def main():
-    training_labels = np.load("./data/train_labels.npy")
+    training_labels = np.load("./data/train_labels_0.5_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
 
     dimensions = 3
-    save_fig = "../figures/dim_reduced_data.png"
+    save_fig = "../figures/dim_reduced_data_heavy_miss.png"
 
     dimension_reduction(
         training_matrix,

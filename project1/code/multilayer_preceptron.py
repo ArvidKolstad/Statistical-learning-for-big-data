@@ -146,13 +146,13 @@ class MultilayerPerception(nn.Module):
         accuracy = correct / total
         return accuracy
 
-    def save_model_settings(self):
+    def save_model_settings(self, model_name: str):
         settings = {
             "layer_dim": self.layer_dim,
             "act_func": self.act_func,
             "dropout_rate": self.dropout_rate,
         }
-        with open("./saved_models/mlp_settings", "wb") as f:
+        with open("./saved_models/mlp_settings_" + model_name, "wb") as f:
             pkl.dump(settings, f)
 
 
@@ -193,6 +193,7 @@ def kCV(
     scheduler,
     scheduler_settings,
     save_model=False,
+    model_name="normal",
 ):
 
     skf = StratifiedKFold(n_splits=k, shuffle=True)
@@ -232,8 +233,8 @@ def kCV(
         if score > best_fold_score and save_model:
             best_fold_score = score
 
-            torch.save(model.state_dict(), "./saved_models/mlp")
-            model.save_model_settings()
+            torch.save(model.state_dict(), "./saved_models/mlp_" + model_name)
+            model.save_model_settings(model_name)
 
         fold_score.append(score)
         print(f"Best val score: {score}")
@@ -389,8 +390,24 @@ def main():
         "scheduler": scheduler,
         "scheduler_settings": scheduler_settings,
         "save_model": True,
+        "model_name": None,
     }
-    kCV(**params)
+
+    # kCV(**params)
+
+    # part 2
+    misslabeled_data = [
+        "./data/train_labels_0.1_mislabel.npy",
+        "./data/train_labels_0.1_mislabel.npy",
+        "./data/train_labels_0.1_mislabel.npy",
+    ]
+    model_name = ["light", "moderate", "heavy"]
+    for idx, path in enumerate(misslabeled_data):
+        bad_label = np.load(path)
+        bad_data = ReducedDimDataset(red_training_matrix, bad_label)
+        params["data_set"] = bad_data
+        params["model_name"] = model_name[idx]
+        kCV(**params)
 
     # hyper parameter optimization
     """
