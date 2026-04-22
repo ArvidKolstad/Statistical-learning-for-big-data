@@ -15,7 +15,7 @@ def dimension_reduction(
     save_path=None,
 ):
 
-    pca = PCA(n_components=n_dim_pca, random_state=42)
+    pca = PCA(n_components=n_dim_pca)
     train_pca = pca.fit_transform(train_data)
 
     if tsne:
@@ -109,4 +109,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
