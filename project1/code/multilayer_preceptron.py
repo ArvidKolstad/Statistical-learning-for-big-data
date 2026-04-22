@@ -159,8 +159,17 @@ class MultilayerPerception(nn.Module):
 def load_mlp_model(mlp_settings_path, mlp_params_path):
     with open(mlp_settings_path, "rb") as f:
         settings = pkl.load(f)
+
     model = MultilayerPerception(**settings)
-    model.load_state_dict(torch.load(mlp_params_path, weights_only=True))
+
+    state_dict = torch.load(
+        mlp_params_path,
+        map_location=torch.device("cpu")
+    )
+
+    # model.load_state_dict(torch.load(mlp_params_path, weights_only=True))
+    model.load_state_dict(state_dict)
+
     model.eval()
     return model
 

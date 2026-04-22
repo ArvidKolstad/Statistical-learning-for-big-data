@@ -97,6 +97,7 @@ def main():
         "./saved_models/mlp"
     )
 
+    mlp.to(mlp.device)
     mlp_pred = mlp.predict(reduced_test_mlp)
     mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
