@@ -52,7 +52,7 @@ def find_good_ccp_alpha(input_matrix, labels, settings) -> float:
     tree = DecisionTreeClassifier()
     path = tree.cost_complexity_pruning_path(input_matrix, labels)
     alphas = path.ccp_alphas
-    alphas_to_test= np.logspace(np.log10(alphas[1]),np.log10(alphas[-2]),num=50)
+    alphas_to_test = np.logspace(np.log10(alphas[1]), np.log10(alphas[-2]), num=50)
     scores = []
     settings["oob_score"] = False
     for idx, alpha in enumerate(alphas_to_test):
@@ -105,7 +105,7 @@ def tune_rf_and_dim(inputs, labels, n_dims, settings):
         score = cross_val_score(rf, reduced_inputs, labels, cv=5, scoring="accuracy")
 
         results[n_dim] = score.mean()
-        print(f"dim={n_dim}: {score:.4f}")
+        print(f"dim={n_dim}: {results[n_dim]:.4f}")
 
     best_dim = max(results, key=results.get)
 
@@ -127,7 +127,7 @@ def plot_accuracy_rate(
 ):
     plot_scores = []
     original_n_estimator = settings["n_estimators"]
-    for n_trees in range(1,max_number_of_trees +1):
+    for n_trees in range(1, max_number_of_trees + 1):
         settings["n_estimators"] = n_trees
         plot_scores.append(train_rfc(inputs, labels, settings))
 
@@ -154,7 +154,7 @@ def main():
     classifier_settings = {
         "n_estimators": 100,
         "criterion": "gini",
-        "max_depth":None,
+        "max_depth": None,
         "min_samples_split": 30,
         "min_samples_leaf": 10,
         "min_weight_fraction_leaf": 0.0,
@@ -171,7 +171,7 @@ def main():
         "max_samples": 0.98,
     }
 
-    training_labels = np.load("./data/train_labels_0.5_mislabel.npy")
+    training_labels = np.load("./data/train_labels_0.3_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     # training_matrix, _ = dimension_reduction(
     #     training_matrix, train_label=training_labels
@@ -190,7 +190,7 @@ def main():
     print(f"Best maximum sample size: {best_sample}")
     """
 
-   # classifier_settings["max_samples"] = best_sample
+    # classifier_settings["max_samples"] = best_sample
     """
     plot_accuracy_rate(
         training_matrix,
@@ -204,18 +204,17 @@ def main():
         training_matrix,
         training_labels,
         classifier_settings,
-        save_model="./saved_models/random_forest_heavy",
+        save_model="./saved_models/random_forest_moderate",
     )
     print(score)
-    
 
     _, best_dim = tune_rf_and_dim(
         training_matrix, training_labels, range(10, 151, 10), classifier_settings
     )
 
-    np.save("./saved_models/random_forest_dim_heavy.npy", best_dim)
+    np.save("./saved_models/random_forest_dim_moderate.npy", best_dim)
 
-    with open("./saved_models/random_forest_settings_heavy.pkl", "wb") as f:
+    with open("./saved_models/random_forest_settings_moderate.pkl", "wb") as f:
         pkl.dump(classifier_settings, f)
 
     print("RF trained")
