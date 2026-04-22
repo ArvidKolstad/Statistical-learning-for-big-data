@@ -149,14 +149,14 @@ def main():
 
     lr_pred = lr.predict(scaled_reduced_test_lr)
 
-    # save_path_lr = "../figures/cm_mlp_heavy.png"
-    # lr_acc, lr_err = find_results(
-    #     "Logistic Regression ", 
-    #     lr_pred, 
-    #     test_labels, 
-    #     save_path_lr)
+    save_path_lr = "../figures/cm_lr.png"
+    lr_acc, lr_err = find_results(
+        "Logistic Regression ", 
+        lr_pred, 
+        test_labels, 
+        save_path_lr)
 
-    lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
+    # lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
 
 
     # Results
