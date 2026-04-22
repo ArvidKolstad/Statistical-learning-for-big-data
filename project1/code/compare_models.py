@@ -75,14 +75,14 @@ def main():
 
     knn_pred = knn.predict(reduced_test)
 
-    save_path_knn = "../figures/cm_knn.png"
-    knn_acc, knn_err = find_results(
-        "kNN ", 
-        knn_pred, 
-        test_labels, 
-        save_path_knn)
+    # save_path_knn = "../figures/cm_knn.png"
+    # knn_acc, knn_err = find_results(
+    #     "kNN ", 
+    #     knn_pred, 
+    #     test_labels, 
+    #     save_path_knn)
 
-    # knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
+    knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
 
 
     # Random Forest
@@ -97,14 +97,14 @@ def main():
 
     rf_pred = rf.predict(reduced_test_rf)
 
-    save_path_rf = "../figures/cm_rf.png"
-    rf_acc, rf_err = find_results(
-        "Random Forest ", 
-        rf_pred, 
-        test_labels, 
-        save_path_rf)
+    # save_path_rf = "../figures/cm_rf.png"
+    # rf_acc, rf_err = find_results(
+    #     "Random Forest ", 
+    #     rf_pred, 
+    #     test_labels, 
+    #     save_path_rf)
 
-    # rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
+    rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
     # # MLP
     mlp = load_mlp_model(
@@ -122,14 +122,14 @@ def main():
     mlp.to(mlp.device)
     mlp_pred = mlp.predict(reduced_test_mlp)
 
-    save_path_mlp = "../figures/cm_mlp.png"
-    mlp_acc, mlp_err = find_results(
-        "MLP ", 
-        mlp_pred, 
-        test_labels, 
-        save_path_mlp)
+    # save_path_mlp = "../figures/cm_mlp.png"
+    # mlp_acc, mlp_err = find_results(
+    #     "MLP ", 
+    #     mlp_pred, 
+    #     test_labels, 
+    #     save_path_mlp)
 
-    # mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
+    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
     # Logistic Regression
     lr, best_dim_lr, scaler = tune_dim_red(
@@ -149,14 +149,14 @@ def main():
 
     lr_pred = lr.predict(scaled_reduced_test_lr)
 
-    save_path_lr = "../figures/cm_mlp_heavy.png"
-    lr_acc, lr_err = find_results(
-        "Logistic Regression ", 
-        lr_pred, 
-        test_labels, 
-        save_path_lr)
+    # save_path_lr = "../figures/cm_mlp_heavy.png"
+    # lr_acc, lr_err = find_results(
+    #     "Logistic Regression ", 
+    #     lr_pred, 
+    #     test_labels, 
+    #     save_path_lr)
 
-    # lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
+    lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
 
 
     # Results
