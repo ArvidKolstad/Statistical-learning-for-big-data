@@ -61,11 +61,9 @@ class MultilayerPerception(nn.Module):
         loss_function,
         optimizer,
         scheduler,
-        save_model=False,
     ):
 
         self.to(self.device)
-        params = self.state_dict()
 
         best_val_acc = 0.0
         best_state = self.state_dict()
@@ -105,8 +103,7 @@ class MultilayerPerception(nn.Module):
 
             if best_val_acc < val_acc:
                 best_val_acc = val_acc
-                if save_model:
-                    params = self.state_dict()
+                best_state = self.state_dict()
 
             if (epoch + 1) % 100 == 0:
                 print(
@@ -114,10 +111,6 @@ class MultilayerPerception(nn.Module):
                     f"Train acc: {train_acc:.4f} | "
                     f"Val acc: {val_acc:.4f}"
                 )
-
-        if save_model:
-            torch.save(params, "./saved_models/mlp")
-            self.save_model_settings()
 
         self.load_state_dict(best_state)
         return best_val_acc
@@ -153,13 +146,13 @@ class MultilayerPerception(nn.Module):
         accuracy = correct / total
         return accuracy
 
-    def save_model_settings(self):
+    def save_model_settings(self, model_name: str):
         settings = {
             "layer_dim": self.layer_dim,
             "act_func": self.act_func,
             "dropout_rate": self.dropout_rate,
         }
-        with open("./saved_models/mlp_settings", "wb") as f:
+        with open("./saved_models/mlp_settings_" + model_name, "wb") as f:
             pkl.dump(settings, f)
 
 
@@ -199,9 +192,12 @@ def kCV(
     optimizer_settings,
     scheduler,
     scheduler_settings,
+    save_model=False,
+    model_name="normal",
 ):
 
     skf = StratifiedKFold(n_splits=k, shuffle=True)
+    best_fold_score = 0.0
     fold_score = []
 
     matrixes = data_set.inputs.detach().cpu().numpy()
@@ -234,6 +230,12 @@ def kCV(
         training_settings["scheduler"] = sched_func
 
         score = model.train_params(**training_settings)
+        if score > best_fold_score and save_model:
+            best_fold_score = score
+
+            torch.save(model.state_dict(), "./saved_models/mlp_" + model_name)
+            model.save_model_settings(model_name)
+
         fold_score.append(score)
         print(f"Best val score: {score}")
     return fold_score
@@ -259,11 +261,13 @@ def hyper_parameter_opt(
     parameter_values: list,
     module: str,
     params: list,
-    data_set=None,
+    type_run,
+    data_matrix=None,
+    data_label=None,
 ):
 
     print("Now training for " + hyper_parameter)
-    if isinstance(params[get_dict(module)][hyper_parameter], list or np.ndarray):
+    if isinstance(params[get_dict(module)][hyper_parameter], (list, np.ndarray)):
         original_value = params[get_dict(module)][hyper_parameter].copy()
     else:
         original_value = params[get_dict(module)][hyper_parameter]
@@ -273,56 +277,64 @@ def hyper_parameter_opt(
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
 
+    if data_matrix is None and data_label is None:
+        redo_data = False
+    else:
+        redo_data = True
+
     input_dim = None
     x1 = None
     value = None
     scores = []
+    x2 = []
 
     for idx, value in enumerate(parameter_values):
-
-        if (hyper_parameter == "layer_dim") and data_set:
-            red_training_matrix, _ = dimension_reduction(
-                data_set[0], train_label=data_set[1], n_dim_pca=value
-            )
-            input_dim = red_training_matrix.shape[1]
-            new_layout = original_value.copy()
-            new_layout[0] = input_dim
-            value = new_layout
+        if redo_data:
+            if hyper_parameter == "layer_dim":
+                red_training_matrix, _ = dimension_reduction(
+                    data_matrix, n_dim_pca=value
+                )
+                input_dim = red_training_matrix.shape[1]
+                new_layout = original_value.copy()
+                new_layout[0] = input_dim
+                value = new_layout
+            else:
+                red_training_matrix, _ = dimension_reduction(data_matrix, n_dim_pca=0.8)
 
             data_set_train = ReducedDimDataset(
                 red_training_matrix,
-                data_set[1],
+                data_label,
             )
-
             params[get_dict("data")] = data_set_train
 
         params[get_dict(module)][hyper_parameter] = value
         score = kCV(*params)
         scores.append(score)
-        if (hyper_parameter == "layer_dim") and data_set:
+        if hyper_parameter == "layer_dim":
             x1 = np.ones_like(score) * input_dim
+            x2.append(input_dim)
         else:
             x1 = np.ones_like(score) * value
+            x2.append(value)
 
         ax1.scatter(x1, score, color=color[idx % 2])
 
         print(f"Done hyper training: {idx+1}/{len(parameter_values)}")
 
-    if (hyper_parameter == "layer_dim") and data_set:
-        x2 = np.ones(len(scores)) * input_dim
-        params[get_dict("data")] = original_data_set
-    else:
-        x2 = np.ones(len(scores)) * value
-
     ax2.boxplot(scores, tick_labels=x2)
     ax2.set_title(f"Hyper parameter: {hyper_parameter}")
-    fig2.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter + "_boxplot")
+    fig2.savefig(
+        "../figures/hyper_param_tune_mlp/" + hyper_parameter + "_boxplot" + type_run
+    )
 
     ax1.grid()
     ax1.set_title(f"Hyper parameter: {hyper_parameter}")
     fig1.tight_layout()
-    fig1.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter)
+    fig1.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter + type_run)
     params[get_dict(module)][hyper_parameter] = original_value
+
+    if redo_data:
+        params[get_dict("data")] = original_data_set
 
 
 def main():
@@ -330,7 +342,7 @@ def main():
     training_labels = np.load("./data/train_labels.npy")
 
     red_training_matrix, _ = dimension_reduction(
-        training_matrix, train_label=training_labels
+        training_matrix, train_label=training_labels, n_dim_pca=44
     )
 
     input_layer = red_training_matrix.shape[1]
@@ -340,14 +352,14 @@ def main():
     layout = {
         "layer_dim": [input_layer, 256, 128, 64, 32, classes],
         "act_func": ["ReLU", "ReLU", "ReLU", "ReLU", "identity"],
-        "dropout_rate": 0.2,
+        "dropout_rate": 0.3,
     }
 
     optimizer = Adam
     optimizer_settings = {
         "params": None,
-        "lr": 0.001,
-        "weight_decay": 1e-4,
+        "lr": 0.005,
+        "weight_decay": 0.001,
     }
 
     scheduler = ReduceLROnPlateau
@@ -366,25 +378,47 @@ def main():
         red_training_matrix,
         training_labels,
     )
-    params = [
-        data_batches,
-        MultilayerPerception,
-        data_set,
-        layout,
-        train_settings,
-        optimizer,
-        optimizer_settings,
-        scheduler,
-        scheduler_settings,
-    ]
 
-    #
+    params = {
+        "k": data_batches,
+        "model_class": MultilayerPerception,
+        "data_set": data_set,
+        "network_layout": layout,
+        "training_settings": train_settings,
+        "optimizer": optimizer,
+        "optimizer_settings": optimizer_settings,
+        "scheduler": scheduler,
+        "scheduler_settings": scheduler_settings,
+        "save_model": True,
+        "model_name": None,
+    }
+
+    # kCV(**params)
+
+    # part 2
+    misslabeled_data = [
+        "./data/train_labels_0.1_mislabel.npy",
+        "./data/train_labels_0.1_mislabel.npy",
+        "./data/train_labels_0.1_mislabel.npy",
+    ]
+    model_name = ["light", "moderate", "heavy"]
+    for idx, path in enumerate(misslabeled_data):
+        bad_label = np.load(path)
+        bad_data = ReducedDimDataset(red_training_matrix, bad_label)
+        params["data_set"] = bad_data
+        params["model_name"] = model_name[idx]
+        kCV(**params)
+
+    # hyper parameter optimization
+    """
     hyper_parameter_opt(
         "layer_dim",
         [0.99, 0.90, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10],
         "network",
         params,
-        data_set=[training_matrix, training_labels],
+        "normal",
+        data_matrix=training_matrix,
+        data_label=training_labels,
     )
 
     hyper_parameter_opt(
@@ -392,14 +426,24 @@ def main():
         [0.0, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5],
         "network",
         params,
+        "normal",
     )
     hyper_parameter_opt(
-        "weight_decay", [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3], "optimizer", params
+        "weight_decay",
+        [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3],
+        "optimizer",
+        params,
+        "normal",
     )
     hyper_parameter_opt(
-        "lr", [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1], "optimizer", params
+        "lr",
+        [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
+        "optimizer",
+        params,
+        "normal",
     )
-    hyper_parameter_opt("patience", [3, 6, 8, 10, 15], "scheduler", params)
+
+"""
 
 
 if __name__ == "__main__":
