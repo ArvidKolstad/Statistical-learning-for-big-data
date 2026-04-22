@@ -61,11 +61,9 @@ class MultilayerPerception(nn.Module):
         loss_function,
         optimizer,
         scheduler,
-        save_model=False,
     ):
 
         self.to(self.device)
-        params = self.state_dict()
 
         best_val_acc = 0.0
         best_state = self.state_dict()
@@ -105,8 +103,7 @@ class MultilayerPerception(nn.Module):
 
             if best_val_acc < val_acc:
                 best_val_acc = val_acc
-                if save_model:
-                    params = self.state_dict()
+                best_state = self.state_dict()
 
             if (epoch + 1) % 100 == 0:
                 print(
@@ -114,10 +111,6 @@ class MultilayerPerception(nn.Module):
                     f"Train acc: {train_acc:.4f} | "
                     f"Val acc: {val_acc:.4f}"
                 )
-
-        if save_model:
-            torch.save(params, "./saved_models/mlp")
-            self.save_model_settings()
 
         self.load_state_dict(best_state)
         return best_val_acc
@@ -199,9 +192,11 @@ def kCV(
     optimizer_settings,
     scheduler,
     scheduler_settings,
+    save_model=False,
 ):
 
     skf = StratifiedKFold(n_splits=k, shuffle=True)
+    best_fold_score = 0.0
     fold_score = []
 
     matrixes = data_set.inputs.detach().cpu().numpy()
@@ -234,6 +229,12 @@ def kCV(
         training_settings["scheduler"] = sched_func
 
         score = model.train_params(**training_settings)
+        if score > best_fold_score and save_model:
+            best_fold_score = score
+
+            torch.save(model.state_dict(), "./saved_models/mlp")
+            model.save_model_settings()
+
         fold_score.append(score)
         print(f"Best val score: {score}")
     return fold_score
@@ -340,7 +341,7 @@ def main():
     training_labels = np.load("./data/train_labels.npy")
 
     red_training_matrix, _ = dimension_reduction(
-        training_matrix, train_label=training_labels
+        training_matrix, train_label=training_labels, n_dim_pca=44
     )
 
     input_layer = red_training_matrix.shape[1]
@@ -350,14 +351,14 @@ def main():
     layout = {
         "layer_dim": [input_layer, 256, 128, 64, 32, classes],
         "act_func": ["ReLU", "ReLU", "ReLU", "ReLU", "identity"],
-        "dropout_rate": 0.2,
+        "dropout_rate": 0.3,
     }
 
     optimizer = Adam
     optimizer_settings = {
         "params": None,
-        "lr": 0.001,
-        "weight_decay": 1e-4,
+        "lr": 0.005,
+        "weight_decay": 0.001,
     }
 
     scheduler = ReduceLROnPlateau
@@ -376,19 +377,23 @@ def main():
         red_training_matrix,
         training_labels,
     )
-    params = [
-        data_batches,
-        MultilayerPerception,
-        data_set,
-        layout,
-        train_settings,
-        optimizer,
-        optimizer_settings,
-        scheduler,
-        scheduler_settings,
-    ]
 
-    #
+    params = {
+        "k": data_batches,
+        "model_class": MultilayerPerception,
+        "data_set": data_set,
+        "network_layout": layout,
+        "training_settings": train_settings,
+        "optimizer": optimizer,
+        "optimizer_settings": optimizer_settings,
+        "scheduler": scheduler,
+        "scheduler_settings": scheduler_settings,
+        "save_model": True,
+    }
+    kCV(**params)
+
+    # hyper parameter optimization
+    """
     hyper_parameter_opt(
         "layer_dim",
         [0.99, 0.90, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10],
@@ -421,8 +426,7 @@ def main():
         "normal",
     )
 
-    # part2
-    # light misslabel
+"""
 
 
 if __name__ == "__main__":
