@@ -74,7 +74,15 @@ def main():
     )
 
     knn_pred = knn.predict(reduced_test)
-    knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
+
+    save_path_knn = "../figures/cm_knn.png"
+    knn_acc, knn_err = find_results(
+        "kNN ", 
+        knn_pred, 
+        test_labels, 
+        save_path_knn)
+
+    # knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
 
 
     # Random Forest
@@ -88,8 +96,15 @@ def main():
     )
 
     rf_pred = rf.predict(reduced_test_rf)
-    rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
+    save_path_rf = "../figures/cm_rf.png"
+    rf_acc, rf_err = find_results(
+        "Random Forest ", 
+        rf_pred, 
+        test_labels, 
+        save_path_rf)
+
+    # rf_acc, rf_err = find_results("Random Forest ", rf_pred, test_labels)
 
     # # MLP
     mlp = load_mlp_model(
@@ -97,10 +112,24 @@ def main():
         "./saved_models/mlp"
     )
 
+    _, reduced_test_mlp = dimension_reduction(
+        train_data, 
+        test_data=test_data, 
+        train_label=train_labels, 
+        n_dim_pca=44
+    )
+
     mlp.to(mlp.device)
     mlp_pred = mlp.predict(reduced_test_mlp)
-    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
+    save_path_mlp = "../figures/cm_mlp.png"
+    mlp_acc, mlp_err = find_results(
+        "MLP ", 
+        mlp_pred, 
+        test_labels, 
+        save_path_mlp)
+
+    # mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
     # Logistic Regression
     lr, best_dim_lr, scaler = tune_dim_red(
@@ -119,21 +148,29 @@ def main():
     scaled_reduced_test_lr = scaler.transform(reduced_test_lr)
 
     lr_pred = lr.predict(scaled_reduced_test_lr)
-    lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
+
+    save_path_lr = "../figures/cm_mlp_heavy.png"
+    lr_acc, lr_err = find_results(
+        "Logistic Regression ", 
+        lr_pred, 
+        test_labels, 
+        save_path_lr)
+
+    # lr_acc, lr_err = find_results("Logistic Regression ", lr_pred, test_labels)
 
 
     # Results
     results_acc = {
         "kNN": knn_acc,
         "Random Forest": rf_acc,
-        # "MLP": mlp_acc,
+        "MLP": mlp_acc,
         "LogReg": lr_acc
     }
 
     results_err = {
         "kNN": knn_err,
         "Random Forest": rf_err,
-        # "MLP": mlp_err,
+        "MLP": mlp_err,
         "LogReg": lr_err
     }
 

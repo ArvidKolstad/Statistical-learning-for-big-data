@@ -164,7 +164,8 @@ def load_mlp_model(mlp_settings_path, mlp_params_path):
 
     state_dict = torch.load(
         mlp_params_path,
-        map_location=torch.device("cpu")
+        map_location=torch.device("cpu"),
+        weights_only=True
     )
 
     # model.load_state_dict(torch.load(mlp_params_path, weights_only=True))
