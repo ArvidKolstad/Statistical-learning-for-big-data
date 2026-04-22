@@ -163,9 +163,7 @@ def load_mlp_model(mlp_settings_path, mlp_params_path):
     model = MultilayerPerception(**settings)
 
     state_dict = torch.load(
-        mlp_params_path,
-        map_location=torch.device("cpu"),
-        weights_only=True
+        mlp_params_path, map_location=torch.device("cpu"), weights_only=True
     )
 
     # model.load_state_dict(torch.load(mlp_params_path, weights_only=True))
@@ -408,8 +406,8 @@ def main():
     # part 2
     misslabeled_data = [
         "./data/train_labels_0.1_mislabel.npy",
-        "./data/train_labels_0.1_mislabel.npy",
-        "./data/train_labels_0.1_mislabel.npy",
+        "./data/train_labels_0.3_mislabel.npy",
+        "./data/train_labels_0.5_mislabel.npy",
     ]
     model_name = ["light", "moderate", "heavy"]
     for idx, path in enumerate(misslabeled_data):

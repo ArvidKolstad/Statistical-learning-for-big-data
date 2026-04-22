@@ -7,7 +7,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 
 
-class MyRandomForest:
+class RandomForest:
     def __init__(self, **settings):
         self.model = RandomForestClassifier(**settings)
 
@@ -38,7 +38,7 @@ def train_rfc(
     save_model=None,
 ):
 
-    rf = MyRandomForest(**settings)
+    rf = RandomForest(**settings)
     rf.fit(inputs, labels)
 
     if save_model:
@@ -96,20 +96,12 @@ def tune_rf_and_dim(inputs, labels, n_dims, settings):
 
     for n_dim in n_dims:
         reduced_inputs, _ = dimension_reduction(
-            inputs,
-            train_label=labels,
-            n_dim_pca=n_dim
+            inputs, train_label=labels, n_dim_pca=n_dim
         )
 
         rf = RandomForestClassifier(**settings)
 
-        score = cross_val_score(
-            rf,
-            reduced_inputs,
-            labels,
-            cv=5,
-            scoring="accuracy"
-        )
+        score = cross_val_score(rf, reduced_inputs, labels, cv=5, scoring="accuracy")
 
         results[n_dim] = score.mean()
         print(f"dim={n_dim}: {score:.4f}")
@@ -117,16 +109,10 @@ def tune_rf_and_dim(inputs, labels, n_dims, settings):
     best_dim = max(results, key=results.get)
 
     reduced_inputs, _ = dimension_reduction(
-        inputs,
-        train_label=labels,
-        n_dim_pca=best_dim
+        inputs, train_label=labels, n_dim_pca=best_dim
     )
 
-    best_rf = train_rfc(
-        reduced_inputs,
-        labels,
-        settings
-    )
+    best_rf = train_rfc(reduced_inputs, labels, settings)
 
     return best_rf, best_dim
 
@@ -160,8 +146,7 @@ def plot_accuracy_rate(
 
 
 def main():
-    dimensions = 3
-    max_n_trees = 200
+    max_n_trees = 100
     save_plot = "../figures/RF_accuracy_over_many_trees.png"
     max_samples_range = [0.6, 1.0]
 
@@ -185,63 +170,51 @@ def main():
         "max_samples": 0.86,
     }
 
-    training_labels = np.load("./data/train_labels.npy")
+    training_labels = np.load("./data/train_labels_0.1_mislabel.npy")
     training_matrix = np.load("./data/train_matrix.npy")
     # training_matrix, _ = dimension_reduction(
     #     training_matrix, train_label=training_labels
     # )
 
     best_ccp_alpha = find_good_ccp_alpha(
-        training_matrix, 
-        training_labels, 
-        classifier_settings
+        training_matrix, training_labels, classifier_settings
     )
-    # print(f"Best alpha: {best_ccp_alpha}")
+    print(f"Best alpha: {best_ccp_alpha}")
     classifier_settings["ccp_alpha"] = best_ccp_alpha
 
     # print(training_matrix.shape)
     best_sample = find_good_max_sample(
-        training_matrix, 
-        training_labels, 
-        max_samples_range, 
-        classifier_settings
+        training_matrix, training_labels, max_samples_range, classifier_settings
     )
+    print(f"Best maximum sample size: {best_sample}")
 
     classifier_settings["max_samples"] = best_sample
 
-    # plot_accuracy_rate(
-    #     training_matrix,
-    #     training_labels,
-    #     max_n_trees,
-    #     classifier_settings,
-    #     save_plot,
-    # )
-    
-    # score = train_rfc(
-    #     training_matrix,
-    #     training_labels,
-    #     classifier_settings,
-    #     save_model="./saved_models/random_forest",
-    # )
-    # print(score)
-
-    rf, best_dim = tune_rf_and_dim(
+    plot_accuracy_rate(
         training_matrix,
         training_labels,
-        range(10,151,10),
-        classifier_settings
-    )    
+        max_n_trees,
+        classifier_settings,
+        save_plot,
+    )
 
-    rf.save("./saved_models/random_forest")
+    score = train_rfc(
+        training_matrix,
+        training_labels,
+        classifier_settings,
+        save_model="./saved_models/random_forest_light",
+    )
+    print(score)
 
-    np.save("./saved_models/random_forest_dim.npy", best_dim)
+    _, best_dim = tune_rf_and_dim(
+        training_matrix, training_labels, range(10, 151, 10), classifier_settings
+    )
 
-    import pickle as pkl
+    np.save("./saved_models/random_forest_dim_light.npy", best_dim)
 
-    with open("./saved_models/random_forest_settings.pkl", "wb") as f:
+    with open("./saved_models/random_forest_settings_light.pkl", "wb") as f:
         pkl.dump(classifier_settings, f)
 
-    
     print("RF trained")
 
 

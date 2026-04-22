@@ -11,7 +11,7 @@ from multilayer_preceptron import (
 )  # ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
 from knn_classifier import tune_knn_and_dim_red
-from random_forest import MyRandomForest  # train_rfc
+from random_forest import RandomForest  # train_rfc
 from config_rf import classifier_settings
 from logistic_classifier import tune_dim_red
 
@@ -76,7 +76,7 @@ def main():
     knn_acc, knn_err = find_results("kNN ", knn_pred, test_labels)
 
     # Random Forest
-    rf = MyRandomForest().load("./saved_models/random_forest")
+    rf = RandomForest().load("./saved_models/random_forest")
     best_dim_rf = int(np.load("./saved_models/random_forest_dim.npy"))
 
     _, reduced_test_rf = dimension_reduction(
