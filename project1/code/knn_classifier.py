@@ -97,12 +97,12 @@ def main():
     
     # classifier_preformance(knn, test_matrix, test_labels)
 
-    import pickle as pkl
+    # import pickle as pkl
 
-    with open("./saved_models/knn.pkl", "wb") as f:
-        pkl.dump(knn, f)
+    # with open("./saved_models/knn.pkl", "wb") as f:
+    #     pkl.dump(knn, f)
 
-    np.save("./saved_models/knn_dim.npy", best_dim)
+    # np.save("./saved_models/knn_dim.npy", best_dim)
 
 if __name__ == "__main__":
     main()

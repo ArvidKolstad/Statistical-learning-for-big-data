@@ -6,7 +6,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-from multilayer_preceptron import ReducedDimDataset, MultilayerPerception
+from multilayer_preceptron import load_mlp_model # ReducedDimDataset, MultilayerPerception
 from dim_red import dimension_reduction
 from knn_classifier import tune_knn_and_dim_red
 from random_forest import MyRandomForest # train_rfc
@@ -21,13 +21,26 @@ def find_results(name, predictions, test_labels, save_path=None):
     errors = (predictions != test_labels).sum()
 
     cm = confusion_matrix(test_labels, predictions)
-    ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap="Blues")
-    plt.title(f"{name}Confusion Matrix")
+
+    fig, ax = plt.subplots(figsize=(7,6))
+
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm)
+    disp.plot(
+        cmap="Blues",
+        ax=ax,
+        colorbar=False)
+
+    ax.set_title(f"{name}Confusion Matrix")
+    plt.tight_layout()
     plt.show()
 
     # Save Figure
     if save_path is not None:
-        fig.savefig(save_path, bbox_inches="tight", dpi=300)
+        fig.savefig(
+            save_path, 
+            bbox_inches="tight", 
+            dpi=300)
 
     plt.close(fig)
 
@@ -44,13 +57,6 @@ def main():
     test_data = np.load("./data/test_matrix.npy")
     test_labels = np.load("./data/test_labels.npy")
 
-    # # Dimension reduction
-    # reduced_train, reduced_test = dimension_reduction(
-    #     train_data,
-    #     test_data=test_data,
-    #     train_label=train_labels,
-    #     n_dim_pca=50
-    # )
 
     # kNN
     knn, best_dim = tune_knn_and_dim_red(
@@ -86,15 +92,13 @@ def main():
 
 
     # # MLP
-    # mlp = MultilayerPerception(
-    #     layer_dim=[reduced_train.shape[1], 128, 64, 10],
-    #     act_func=["ReLU", "ReLU", "identity"],
-    #     dropout_rate=0.2
-    # )
+    mlp = load_mlp_model(
+        "./saved_models/mlp_settings",
+        "./saved_models/mlp"
+    )
 
-    # mlp.fit(reduced_train, train_labels, epochs=5)
-    # mlp_pred = mlp.predict(reduced_test)
-    # mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
+    mlp_pred = mlp.predict(reduced_test_mlp)
+    mlp_acc, mlp_err = find_results("MLP ", mlp_pred, test_labels)
 
 
     # Logistic Regression

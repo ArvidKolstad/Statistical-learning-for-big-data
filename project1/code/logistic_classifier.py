@@ -76,15 +76,6 @@ def main():
 
     # classifier_preformance(model, test_matrix, test_labels)
 
-    import pickle as pkl
-
-    with open("./saved_models/logreg.pkl", "wb") as f:
-        pkl.dump(model, f)
-
-    with open("./saved_models/logreg_scaler.pkl", "wb") as f:
-        pkl.dump(scaler, f)
-
-    np.save("./saved_models/logreg_dim.npy", n_dim)
 
     print("Training complete")
 
