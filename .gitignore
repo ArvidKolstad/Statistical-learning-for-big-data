@@ -193,5 +193,3 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
-
-./project2/code/data
