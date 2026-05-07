@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 
 
 def split_data():
@@ -30,7 +30,7 @@ def split_data():
         df_label_small = df_label.sample(frac=keep_data_frac)
         df_small = pd.concat([df_small, df_label_small])
     df = df_small
-    
+
     # Split data
     for label in unique_labels:
         df_label = df[df["label"] == label]
@@ -60,7 +60,9 @@ def split_data():
 
 def preprocess_data(images, labels, data_splits, test_size, train_size):
     print(images.shape)
-    sp = ShuffleSplit(n_splits=data_splits, test_size=test_size, train_size=train_size)
+    sp = StratifiedShuffleSplit(
+        n_splits=data_splits, test_size=test_size, train_size=train_size
+    )
     train = sp.split(images, labels)
     print(train)
     for i, (train, test) in enumerate(sp.split(images, labels)):
