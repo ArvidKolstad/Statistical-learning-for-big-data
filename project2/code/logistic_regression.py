@@ -73,8 +73,10 @@ def main():
 
     print(f"Cross-validation accuracy: {cv_score:.4f}")
 
+    # save_model(model, "./saved_models/logistic_regression.pkl")
     save_model(model, "./saved_models/logistic_regression_flipped.pkl")
 
+    # loaded_model = load_model("./saved_models/logistic_regression.pkl")
     loaded_model = load_model("./saved_models/logistic_regression_flipped.pkl")
 
     test_accuracy = evaluate_model(
