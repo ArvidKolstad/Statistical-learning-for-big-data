@@ -71,7 +71,8 @@ def preprocess_data(images, labels, data_splits, test_size, train_size):
 
 
 def main():
-    split_data()
+    # split_data()
+    print(np.load("./data/train_labels.npy")[0])
 
 
 if __name__ == "__main__":

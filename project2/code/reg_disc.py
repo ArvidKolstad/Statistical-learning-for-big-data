@@ -1,76 +1,98 @@
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
-from numpy.linalg import inv, det
-
-
-class AnimalPictures(Dataset):
-    def __init__(self, in_features, labels):
-        self.in_features = in_features
-        self.labels = labels
-
-    def __len__(self):
-        return self.in_features.shape[0]
-
-    def __getitem__(self, idx):
-        x = self.in_features[idx]
-        y = self.labels[idx]
-
-        return x, y
+from numpy.linalg import inv, slogdet
+from train_utils import AnimalPictures, kCV
 
 
 class RegularizedDiscriminantAnalysis:
     def __init__(
-        self, in_features: int, classes: int, lmbda: float, gamma: float
+        self,
+        in_features: int,
+        classes: int,
+        lmbda: float,
+        gamma: float,
+        class_names: list,
+        load_params=None,
     ) -> None:
         self.in_features = in_features
         self.classes = classes
 
-        self.covariance_matrix = np.identity(in_features)
-        self.inverse_covariance = np.identity(in_features)
-        self.mean_vector = np.zeros((in_features, classes))
-        self.pi = np.zeros(classes)
-
         self.lmbda = lmbda
         self.gamma = gamma
 
-    def __call__(self, input_array) -> int:
+        self.mean_vector = np.zeros((classes, in_features))
+        self.covariance_matrices = np.zeros((classes, in_features, in_features))
+        self.inverse_covariances = np.zeros((classes, in_features, in_features))
+        self.pi = np.zeros(classes)
+        self.class_names = class_names
+
+        if load_params:
+            self.load(load_params)
+
+    def __call__(self, input_array) -> np.ndarray:
         return self.decision_rule(input_array)
 
-    def decision_rule(self, input_array: np.ndarray) -> int:
+    def save(self, save_path):
+        np.savez(
+            save_path,
+            mean_vector=self.mean_vector,
+            covariance_matrices=self.covariance_matrices,
+            inverse_covariances=self.inverse_covariances,
+            pi=self.pi,
+        )
+
+    def load(self, save_path):
+        with np.load(save_path) as model_params:
+
+            assert (
+                self.covariance_matrices.shape
+                == model_params["covariance_matrices"].shape
+            )
+            assert (
+                self.inverse_covariances.shape
+                == model_params["inverse_covariances"].shape
+            )
+            assert self.mean_vector.shape == model_params["mean_vector"].shape
+
+            self.mean_vector = model_params["mean_vector"]
+            self.covariance_matrices = model_params["covariance_matrices"]
+            self.inverse_covariances = model_params["inverse_covariances"]
+            self.pi = model_params["pi"]
+
+    def decision_rule(self, input_array: np.ndarray) -> np.ndarray:
         x = input_array
+        self.mean_vector
+        _, log_det_abs = slogdet(self.covariance_matrices)
 
-        scores = []
+        diff = x[:, None, :] - self.mean_vector[None, :, :]
 
-        log_det = np.log(np.linalg.det(self.covariance_matrix))
+        tmp = np.einsum("bki,kij->bkj", diff, self.inverse_covariances)
+        quad = (tmp * diff).sum(axis=-1)
 
-        for k in range(self.classes):
-            diff = x - self.mean_vector[:, k]
-            quad_term = diff.T @ self.inverse_covariance @ diff
+        scores = -0.5 * log_det_abs - 0.5 * quad + np.log(self.pi)
 
-            score = -0.5 * log_det - 0.5 * quad_term + np.log(self.pi[k])
-            scores.append(score)
+        return np.argmax(scores, axis=1).astype(np.int64)
 
-        return int(np.argmax(scores))
+    def validation(self, val_loader: DataLoader, save_confusion_matrix=None) -> float:
+        X_all = np.concatenate([X.numpy() for X, _ in val_loader], axis=0)
+        labels_all = np.concatenate([y.numpy() for _, y in val_loader], axis=0)
 
-    def validation(self, val_loader: DataLoader) -> float:
-        correct_classification = 0
-        total_classification = 0
-        for X_batch, labels in val_loader:
-            X_batch, labels = X_batch.numpy(), labels.numpy()
-            for idx, in_features in enumerate(X_batch):
-                total_classification += 1
-                pred = self.decision_rule(in_features)
-                if pred == int(labels[idx]):
-                    correct_classification += 1
+        pred = self.decision_rule(X_all)
+        correct_classification = np.sum(labels_all == pred)
+        total_classification = labels_all.shape[0]
+        if save_confusion_matrix:
+            conf_mat = confusion_matrix(labels_all, pred, normalize="all")
+            disp = ConfusionMatrixDisplay(conf_mat, display_labels=self.class_names)
+            disp.plot()
+            disp.figure_.savefig(save_confusion_matrix)
+
         accuracy = correct_classification / total_classification
         return accuracy
 
     def train(
-        self,
-        train_data: DataLoader,
-        val_data: DataLoader,
+        self, train_data: DataLoader, val_data: DataLoader, save_confusion_matrix=None
     ):
         n_samples = np.zeros(self.classes)
         sum_x = np.zeros((self.classes, self.in_features))
@@ -79,63 +101,54 @@ class RegularizedDiscriminantAnalysis:
         for X_batch, labels in train_data:
             print(np.sum(n_samples))
             X_batch, labels = X_batch.numpy(), labels.numpy()
-            for label in range(self.classes):
-                mask = labels == label
-                if not np.any(mask):
+            for k in range(self.classes):
+                mask = labels == k
+                if not mask.any():
                     continue
-
                 x = X_batch[mask]
-                n_samples[label] += x.shape[0]
-                sum_x[label] += x.sum(axis=0)
-                sum_x2[label] += x.T @ x
+                n_samples[k] += len(x)
+                sum_x[k] += x.sum(axis=0)
+                sum_x2[k] += x.T @ x
 
         total_samples = np.sum(n_samples)
+
         self.pi = n_samples / total_samples
-        self.means = sum_x / n_samples[:, None]
 
-        S_k = np.array(
-            [
-                (sum_x2[k] / n_samples[k]) - np.outer(self.means[k], self.means[k])
-                for k in range(self.classes)
-            ]
+        self.mean_vector = sum_x / n_samples[:, None]
+
+        S_k = (
+            sum_x2 / n_samples[:, None, None]
+            - self.mean_vector[:, :, None] * self.mean_vector[:, None, :]
         )
 
-        S_pooled = (
-            np.sum([n_samples[k] * S_k[k] for k in range(self.classes)], axis=0)
-            / total_samples
-        )
+        S_pooled = np.einsum("k,kij->ij", n_samples, S_k) / total_samples
 
-        self.covariance_matrices = []
-        for k in range(self.classes):
-            S_reg = (1 - self.lmbda) * S_k[k] + self.lmbda * S_pooled
+        S_reg = (1 - self.lmbda) * S_k + self.lmbda * S_pooled[None]
 
-            if self.gamma > 0:
-                average_eig = np.trace(S_reg) / self.in_features
-                S_reg = (1 - self.gamma) * S_reg + self.gamma * average_eig * np.eye(
-                    self.in_features
-                )
+        if self.gamma > 0:
+            avg_eig = np.einsum("kii->k", S_reg) / self.in_features
+            S_reg = (1 - self.gamma) * S_reg + self.gamma * avg_eig[
+                :, None, None
+            ] * np.eye(self.in_features)
 
-            self.covariance_matrices.append(S_reg)
+        self.covariance_matrices = S_reg
 
-        self.inverse_covariance = np.array([inv(m) for m in self.covariance_matrices])
-        print("training done")
+        self.inverse_covariances = inv(S_reg)
 
-        accuracy = self.validation(val_data)
-        return accuracy
+        return self.validation(val_data, save_confusion_matrix=save_confusion_matrix)
 
 
 def run_RDA_training(
+    model: RegularizedDiscriminantAnalysis,
     train_matrix: np.ndarray,
     train_labels: np.ndarray,
     val_matrix: np.ndarray,
     val_labels: np.ndarray,
-    model_settings: dict,
 ):
     train_set = AnimalPictures(train_matrix, train_labels)
     val_set = AnimalPictures(val_matrix, val_labels)
     train_loader = DataLoader(train_set, batch_size=64)
     val_loader = DataLoader(val_set, batch_size=64)
-    model = RegularizedDiscriminantAnalysis(**model_settings)
 
     score = model.train(train_loader, val_loader)
 
@@ -153,13 +166,35 @@ def main():
     train_labels = np.array(train_labels)
     val_matrix = np.array(val_matrix)
     val_labels = np.array(val_labels)
+    val_loader = DataLoader(AnimalPictures(val_matrix, val_labels), batch_size=64)
 
-    settings = {"in_features": 4096, "classes": 2, "lmbda": 0.1, "gamma": 0}
+    settings = {
+        "in_features": 4096,
+        "classes": 2,
+        "lmbda": 0.1,
+        "gamma": 0,
+        "class_names": ["Cats", "Dogs"],
+    }
+    train_settings = {"train_data": None, "val_data": None}
+    model = RegularizedDiscriminantAnalysis(**settings)
 
-    score = run_RDA_training(
-        train_matrix, train_labels, val_matrix, val_labels, settings
+    # score = run_RDA_training(model, train_matrix, train_labels, val_matrix, val_labels)
+    # model.save("./saved_models/RDA_first_try")
+    # print(f"Score: {score}")
+    model.load("./saved_models/RDA_first_try.npz")
+    model.validation(
+        val_loader, save_confusion_matrix="../figures/RDA/confusion_mat.png"
     )
-    print(score)
+
+    kCV(
+        2,
+        RegularizedDiscriminantAnalysis,
+        train_matrix,
+        train_labels,
+        settings,
+        train_settings,
+        data_loaders=True,
+    )
 
 
 if __name__ == "__main__":

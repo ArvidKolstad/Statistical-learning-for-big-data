@@ -1,39 +1,58 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
+
+
+class AnimalPictures(Dataset):
+    def __init__(self, in_features, labels):
+        self.in_features = in_features
+        self.labels = labels
+
+    def __len__(self):
+        return self.in_features.shape[0]
+
+    def __getitem__(self, idx):
+        x = self.in_features[idx]
+        y = self.labels[idx]
+
+        return x, y
 
 
 def kCV(
     k,
     model_class,
-    data_set,
+    train_input,
+    train_target,
     model_settings,
     training_settings,
     save_model=False,
     model_name="normal",
+    data_loaders=False,
 ):
 
     skf = StratifiedKFold(n_splits=k, shuffle=True)
     best_fold_score = 0.0
     fold_score = []
 
-    matrixes = data_set
-    labels = data_set
-
-    for fold, (train_idx, val_idx) in enumerate(skf.split(matrixes, labels)):
+    for fold, (train_idx, val_idx) in enumerate(skf.split(train_input, train_target)):
         print(f"Fold: {fold +1 }/{k}")
+        train_batch = train_input[train_idx], train_target[train_idx]
+        val_batch = train_input[val_idx], train_target[val_idx]
 
-        train_data_loader = DataLoader(
-            data_set, batch_size=100, sampler=SubsetRandomSampler(train_idx)
-        )
+        if data_loaders:
+            train_data_set = AnimalPictures(*train_batch)
+            val_data_set = AnimalPictures(*val_batch)
 
-        val_data_loader = DataLoader(
-            data_set, batch_size=256, sampler=SubsetRandomSampler(val_idx)
-        )
+            train_batch = DataLoader(train_data_set, batch_size=100)
 
-        training_settings["train_data"] = train_data_loader
-        training_settings["val_data"] = val_data_loader
+            val_batch = DataLoader(
+                val_data_set,
+                batch_size=256,
+            )
+
+        training_settings["train_data"] = train_batch
+        training_settings["val_data"] = val_batch
 
         model = model_class(**model_settings)
 
@@ -48,6 +67,12 @@ def kCV(
         fold_score.append(score)
         print(f"Best val score: {score}")
     return fold_score
+
+
+def ignore_data_loaders(train_loader, val_loader):
+    train_data = np.concatenate([data.numpy() for data in train_loader], axis=0)
+    val_data = np.concatenate([data.numpy() for data in val_loader], axis=0)
+    return train_data, val_data
 
 
 def get_dict(module):
