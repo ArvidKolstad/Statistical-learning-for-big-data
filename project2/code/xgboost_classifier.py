@@ -2,12 +2,11 @@ import numpy as np
 import joblib
 
 from xgboost import XGBClassifier
-
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score
 
 
-# Wrapper object
+# Wrapper class
 class XGBoost:
     def __init__(self, **settings):
         self.model = XGBClassifier(**settings)
@@ -40,6 +39,7 @@ def train_XGB(
 
     xgb = XGBoost(**settings)
 
+    # Calculate CV scores
     print('CV started...')
     scores = cross_val_score(
         xgb.model,
@@ -50,12 +50,13 @@ def train_XGB(
         n_jobs=-1)
     print('CV finished.')
 
+    # Training
     xgb.fit(x_train, y_train)
 
     if save_model:
         xgb.save(save_model)
 
-    return xgb, scores.mean()
+    return scores.mean()
 
 
 # Evaluate model
@@ -70,7 +71,7 @@ def evaluate_model(
     return accuracy
 
 
-
+# Main
 def main():
 
     training_labels = np.load("./data/train_labels.npy")
@@ -94,7 +95,7 @@ def main():
         "random_state": 42, # Ska kanske ändras sen när det ska repeteras
         "n_jobs": -1}
 
-    model, cv_score = train_XGB(
+    cv_score = train_XGB(
         training_matrix,
         training_labels,
         classifier_settings,
