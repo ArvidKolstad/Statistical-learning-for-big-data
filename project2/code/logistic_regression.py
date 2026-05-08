@@ -16,7 +16,7 @@ def train_logistic_regression(x_train, y_train, n_folds=10):
         ('model', LogisticRegression(
             solver='lbfgs',
             max_iter=1000,
-            random_state=42
+            random_state=42 # Bör kanske ändras sen för repetering
         ))
     ])
 
