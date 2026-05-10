@@ -182,7 +182,8 @@ def main():
 
     # Number of features
     # feature_method = 'f_test'
-    feature_method = 'lasso'
+    feature_method = 'lasso' # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
+    flipped = False
 
     if feature_method == 'f_test':
         k_values = [100, 200, 500, 1000, 1500, 2000, 3000]
@@ -225,29 +226,23 @@ def main():
         raise ValueError("Feature method must be 'f_test' or 'lasso'")
 
 
+    # Choose path name
+    suffix = '_flipped' if flipped else ''
+    path = f"./saved_models/logistic_regression_{feature_method}{suffix}.pkl"
+
+
     # Train model
     cv_score = train_logistic_regression(
         training_matrix_reduced,
         training_labels,
         n_folds=10,
-        # save_model="./saved_models/logistic_regression_ftest.pkl")
-        save_model="./saved_models/logistic_regression_lasso.pkl")
-        # save_model="./saved_models/logistic_regression_flipped_ftest.pkl")
-        # save_model="./saved_models/logistic_regression_flipped_lasso.pkl")
+        save_model=path)
 
     print(f"Cross-validation accuracy: {cv_score:.4f}")
 
     # Load saved model
-    # loaded_model = LogisticRegressionModel().load(
-    #     "./saved_models/logistic_regression_ftest.pkl")
-    loaded_model = LogisticRegressionModel().load(
-        "./saved_models/logistic_regression_lasso.pkl")
-    # loaded_model = LogisticRegressionModel().load(
-    #     "./saved_models/logistic_regression_flipped_ftest.pkl")
-    # loaded_model = LogisticRegressionModel().load(
-    #     "./saved_models/logistic_regression_flipped_lasso.pkl")
-
-
+    loaded_model = LogisticRegressionModel().load(path)
+    
     # Evaluate on test data
     test_accuracy = evaluate_model(
         loaded_model,
