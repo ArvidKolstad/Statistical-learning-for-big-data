@@ -55,6 +55,7 @@ class XGBoost:
         ).to(device)
 
         self.fit(x_train, y_train)
+
         score = self.score(x_val, y_val)
         return score
 
@@ -94,11 +95,11 @@ def main():
 
     training_labels = np.load("./data/train_labels.npy")
     training_matrix = np.load("./data/train_matrix.npy")
-    # training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+    training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
 
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
-    # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+    test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
 
     classifier_settings = {
         "n_estimators": 100,
@@ -111,7 +112,7 @@ def main():
         "n_jobs": -1,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
     }
-    training_settings = {"k_val": None, "lasso_c": 0.1}
+    training_settings = {"k_val": None, "lasso_c": None}
 
     kCV_settings = {
         "k": 10,
@@ -128,8 +129,9 @@ def main():
 
     params = [classifier_settings, training_settings, kCV_settings]
 
-    values = [1, 0.5, 0.25, 0.1, 0.05, 0.025, 0.001]
-    hyper_parameter_opt("lasso_c", values, "train", params, "xgboost")
+    # values = [100, 300, 500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2300, 2500]
+    # values = [1, 0.5, 0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.0025, 0.001]
+    # hyper_parameter_opt("lasso_c", values, "train", params, "xgboost_flipped")
 
     # save_model="./saved_models/xgboost_flipped.pkl")
 
@@ -143,6 +145,15 @@ def main():
 
     # print(f"Test accuracy: {test_accuracy:.4f}")
     # print("XGBoost model trained, saved, loaded, and evaluated successfully")
+    train_data = training_matrix, training_labels
+    test_data = test_matrix, test_labels
+
+    lasso_model = XGBoost(**classifier_settings)
+    score_lasso = lasso_model.train(train_data, test_data, lasso_c=0.025)
+    print(f"Lasso score: {score_lasso}")
+    f_test_filtering = XGBoost(**classifier_settings)
+    score_f_test = f_test_filtering.train(train_data, test_data, k_val=2100)
+    print(f"F-test score: {score_f_test}")
 
 
 if __name__ == "__main__":
