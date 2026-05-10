@@ -6,11 +6,11 @@ from train_utils import kCV
 from f_test_filter_selection import f_score_filter
 from reg_disc import RegularizedDiscriminantAnalysis, run_RDA_training
 
-
 # ─────────────────────────────────────────────
 #  RDA wrapper — applies f-filter inside each
 #  fold to avoid leaking val data into selection
 # ─────────────────────────────────────────────
+
 
 class RDAWithFilter:
     """
@@ -26,15 +26,15 @@ class RDAWithFilter:
         self.k_features = k_features
         self.rda_settings = {
             "in_features": k_features,
-            "classes":     classes,
-            "lmbda":       lmbda,
-            "gamma":       gamma,
+            "classes": classes,
+            "lmbda": lmbda,
+            "gamma": gamma,
             "class_names": class_names,
         }
 
     def train(self, train_data, val_data):
         X_train, y_train = train_data
-        X_val,   y_val   = val_data
+        X_val, y_val = val_data
 
         # Fit filter on train, get selected indices
         X_train_f, _, selected_idx = f_score_filter(
@@ -46,8 +46,10 @@ class RDAWithFilter:
         self.rda = RegularizedDiscriminantAnalysis(**self.rda_settings)
         score = run_RDA_training(
             self.rda,
-            X_train_f, y_train,
-            X_val_f,   y_val,
+            X_train_f,
+            y_train,
+            X_val_f,
+            y_val,
         )
         return score
 
@@ -56,22 +58,27 @@ class RDAWithFilter:
 #  Parameter sweep
 # ─────────────────────────────────────────────
 
-def param_sweep(train_matrix, train_labels, k_folds, k_features_list, lmbda_list, gamma_list):
+
+def param_sweep(
+    train_matrix, train_labels, k_folds, k_features_list, lmbda_list, gamma_list
+):
     results = []
     total = len(k_features_list) * len(lmbda_list) * len(gamma_list)
 
-    for i, (k_feat, lmbda, gamma) in enumerate(product(k_features_list, lmbda_list, gamma_list), 1):
+    for i, (k_feat, lmbda, gamma) in enumerate(
+        product(k_features_list, lmbda_list, gamma_list), 1
+    ):
         model_settings = {
-            "k_features":  k_feat,
+            "k_features": k_feat,
             "in_features": k_feat,
-            "classes":     2,
-            "lmbda":       lmbda,
-            "gamma":       gamma,
+            "classes": 2,
+            "lmbda": lmbda,
+            "gamma": gamma,
             "class_names": ["Cats", "Dogs"],
         }
         training_settings = {
             "train_data": None,
-            "val_data":   None,
+            "val_data": None,
         }
 
         fold_scores = kCV(
@@ -85,15 +92,19 @@ def param_sweep(train_matrix, train_labels, k_folds, k_features_list, lmbda_list
         )
 
         mean_acc = np.mean(fold_scores)
-        print(f"[{i}/{total}]  k={k_feat}  λ={lmbda}  γ={gamma}  →  mean={mean_acc:.4f}")
+        print(
+            f"[{i}/{total}]  k={k_feat}  λ={lmbda}  γ={gamma}  →  mean={mean_acc:.4f}"
+        )
 
-        results.append({
-            "k":     k_feat,
-            "lmbda": lmbda,
-            "gamma": gamma,
-            "mean":  mean_acc,
-            "folds": fold_scores,
-        })
+        results.append(
+            {
+                "k": k_feat,
+                "lmbda": lmbda,
+                "gamma": gamma,
+                "mean": mean_acc,
+                "folds": fold_scores,
+            }
+        )
 
     results.sort(key=lambda r: r["mean"], reverse=True)
     return results
@@ -103,6 +114,7 @@ def param_sweep(train_matrix, train_labels, k_folds, k_features_list, lmbda_list
 #  Plotting — one subplot per parameter,
 #  averaging over the other two each time
 # ─────────────────────────────────────────────
+
 
 def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     """
@@ -114,16 +126,21 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     # --- k_features ---
     k_vals = sorted(set(r["k"] for r in results))
     k_means = [np.mean([r["mean"] for r in results if r["k"] == k]) for k in k_vals]
-    axes[0].plot(k_vals, k_means, marker="o")
+    k_std = [np.std([r["mean"] for r in results if r["k"] == k]) for k in k_vals]
+
+    axes[0].errorbar(k_vals, k_means, k_std, marker="o")
     axes[0].set_xlabel("k features")
     axes[0].set_ylabel("Mean accuracy")
     axes[0].set_title("Effect of k features")
     axes[0].grid(alpha=0.4)
+    axes[0].x_scale("log")
 
     # --- lmbda ---
     l_vals = sorted(set(r["lmbda"] for r in results))
     l_means = [np.mean([r["mean"] for r in results if r["lmbda"] == l]) for l in l_vals]
-    axes[1].plot(l_vals, l_means, marker="o", color="orange")
+    l_std = [np.std([r["mean"] for r in results if r["lmbda"] == l]) for l in l_vals]
+
+    axes[1].errorbar(l_vals, l_means, yerr=l_std, marker="o", color="orange")
     axes[1].set_xlabel("λ (0=QDA, 1=LDA)")
     axes[1].set_title("Effect of λ")
     axes[1].grid(alpha=0.4)
@@ -131,7 +148,9 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     # --- gamma ---
     g_vals = sorted(set(r["gamma"] for r in results))
     g_means = [np.mean([r["mean"] for r in results if r["gamma"] == g]) for g in g_vals]
-    axes[2].plot(g_vals, g_means, marker="o", color="green")
+    g_std = [np.std([r["mean"] for r in results if r["gamma"] == g]) for g in g_vals]
+
+    axes[2].errorbar(g_vals, g_means, yerr=g_std, marker="o", color="green")
     axes[2].set_xlabel("γ (covariance shrinkage)")
     axes[2].set_title("Effect of γ")
     axes[2].grid(alpha=0.4)
@@ -146,16 +165,18 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
 #  Main
 # ─────────────────────────────────────────────
 
+
 def main():
     train_matrix = np.load("./data/train_matrix.npy")
     train_labels = np.load("./data/train_labels.npy")
 
-    k_features_list = [100, 500, 1000]
-    lmbda_list      = [0.0, 0.5, 1.0]
-    gamma_list      = [0.0, 0.1, 0.5]
+    k_features_list = [100, 300, 500, 700, 900, 1000, 1500, 2000, 2500]
+    lmbda_list = [0.0, 0.25, 0.5, 0.75, 1.0]
+    gamma_list = [0.0, 0.2, 0.4, 0.5]
 
     results = param_sweep(
-        train_matrix, train_labels,
+        train_matrix,
+        train_labels,
         k_folds=5,
         k_features_list=k_features_list,
         lmbda_list=lmbda_list,
@@ -171,3 +192,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
