@@ -217,7 +217,7 @@ def plot_f_test_results(results):
 
     plt.tight_layout()
 
-    save_path = "../figures/logreg/f_test_k_search.png"
+    save_path = "../figures/logreg/f_test_k_search_flipped.png"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     plt.savefig(save_path)
@@ -272,7 +272,7 @@ def plot_lasso_results(results):
 
     plt.tight_layout()
 
-    save_path = '../figures/logreg/lasso_C_search.png'
+    save_path = '../figures/logreg/lasso_C_search_flipped.png'
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     plt.savefig(save_path)
@@ -295,20 +295,24 @@ def main():
     import os
     os.makedirs("./figures/logreg", exist_ok=True)
 
-    # Load original data
+    # Load original labels
     training_labels = np.load("./data/train_labels.npy")
-    training_matrix = np.load("./data/train_matrix.npy")
-    # training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
-
-
     test_labels = np.load("./data/test_labels.npy")
-    test_matrix = np.load("./data/test_matrix.npy")
-    # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+
+    # Load matrices
+    flipped = True
+
+    if flipped:
+        training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+        test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+    else:
+        training_matrix = np.load("./data/train_matrix.npy")
+        test_matrix = np.load("./data/test_matrix.npy")
+
 
     # Number of features
     # feature_method = 'f_test'
     feature_method = 'lasso' # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
-    flipped = False
 
     if feature_method == 'f_test':
         k_values = [100, 200, 500, 1000, 1500, 2000, 3000]
