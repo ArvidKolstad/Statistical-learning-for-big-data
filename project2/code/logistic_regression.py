@@ -19,13 +19,12 @@ class LogisticRegressionModel:
                     LogisticRegression(
                         solver="lbfgs",
                         max_iter=1000,
-                        random_state=42,  # Bör kanske ändras sen för repetering
                     ),
                 ),
             ]
         )
 
-    def fit(self, X, Y):
+    def train(self, X, Y):
         self.model.fit(X, Y)
         return self
 
@@ -54,7 +53,7 @@ def train_logistic_regression(x_train, y_train, n_folds=10, save_model=None):
     )
     print("CV finished.")
 
-    model.fit(x_train, y_train)
+    model.train(x_train, y_train)
 
     if save_model:
         model.save(save_model)
@@ -106,4 +105,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

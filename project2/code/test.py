@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
 
+from logistic_regression import LogisticRegressionModel
 from train_utils import kCV
 from f_test_filter_selection import f_score_filter
 from reg_disc import RegularizedDiscriminantAnalysis, run_RDA_training
@@ -22,7 +23,7 @@ class RDAWithFilter:
         val_data   = (X_val,   y_val)
     """
 
-    def __init__(self, k_features, in_features, classes, lmbda, gamma, class_names):
+    def __init__(self, k_features, classes, lmbda, gamma, class_names):
         self.k_features = k_features
         self.rda_settings = {
             "in_features": k_features,
@@ -52,6 +53,35 @@ class RDAWithFilter:
             y_val,
         )
         return score
+
+
+class LogRegWithFilter:
+    def __init__(self, k_features):
+        self.k_features = k_features
+
+    def train(self, train_data, val_data):
+        X_train, y_train = train_data
+        X_val, y_val = val_data
+
+        # Fit filter on train, get selected indices
+        X_train_f, _, selected_idx = f_score_filter(
+            X_train, y_train, self.k_features, return_scores=True
+        )
+        # Apply same indices to val — no fitting on val data
+        X_val_f = X_val[:, selected_idx]
+
+        self.log_reg = LogisticRegressionModel()
+        self.log_reg.train(X_train_f, y_train)
+        score = self.log_reg.score(X_train, y_train)
+        return score
+
+    def save(self, file_name):
+        self.log_reg.save(file_name)
+
+    def load(self, file_name):
+        self.log_reg = LogisticRegressionModel()
+        self.log_reg.load(file_name)
+        return self.log_reg
 
 
 # ─────────────────────────────────────────────
@@ -192,4 +222,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -99,7 +99,6 @@ class RegularizedDiscriminantAnalysis:
         sum_x2 = np.zeros((self.classes, self.in_features, self.in_features))
 
         for X_batch, labels in train_data:
-            print(np.sum(n_samples))
             X_batch, labels = X_batch.numpy(), labels.numpy()
             for k in range(self.classes):
                 mask = labels == k
