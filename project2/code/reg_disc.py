@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
 from numpy.linalg import inv, slogdet
-from train_utils import AnimalPictures, kCV
+from train_utils import AnimalPictures, kCV, hyper_parameter_opt
 
 
 class RegularizedDiscriminantAnalysis:
@@ -91,7 +91,7 @@ class RegularizedDiscriminantAnalysis:
         accuracy = correct_classification / total_classification
         return accuracy
 
-    def train_params(
+    def train(
         self, train_data: DataLoader, val_data: DataLoader, save_confusion_matrix=None
     ):
         n_samples = np.zeros(self.classes)
@@ -150,7 +150,7 @@ def run_RDA_training(
     train_loader = DataLoader(train_set, batch_size=64)
     val_loader = DataLoader(val_set, batch_size=64)
 
-    score = model.train_params(train_loader, val_loader)
+    score = model.train(train_loader, val_loader)
 
     return score
 
@@ -181,11 +181,13 @@ def main():
     # score = run_RDA_training(model, train_matrix, train_labels, val_matrix, val_labels)
     # model.save("./saved_models/RDA_first_try")
     # print(f"Score: {score}")
-    model.load("./saved_models/RDA_first_try.npz")
-    model.validation(
-        val_loader, save_confusion_matrix="../figures/RDA/confusion_mat.png"
-    )
 
+    # 3model.load("./saved_models/RDA_first_try.npz")
+    # model.validation(
+    # val_loader, save_confusion_matrix="../figures/RDA/confusion_mat.png"
+    # )
+
+    """
     kCV(
         2,
         RegularizedDiscriminantAnalysis,
@@ -195,6 +197,27 @@ def main():
         train_settings,
         data_loaders=True,
     )
+    """
+    kCV_settings = {
+        "k": 8,
+        "model_class": RegularizedDiscriminantAnalysis,
+        "train_input": train_matrix,
+        "train_target": train_labels,
+        "model_settings": settings,
+        "training_settings": train_settings,
+        "data_loaders": True,
+    }
+
+    parameter_value = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    settings_hyper = {
+        "hyper_parameter": "lmbda",
+        "parameter_values": parameter_value,
+        "module": "model",
+        "params": [settings, train_settings, kCV_settings],
+        "data_matrix": train_matrix,
+        "data_label": train_labels,
+    }
+    hyper_parameter_opt(**settings_hyper)
 
 
 if __name__ == "__main__":

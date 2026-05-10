@@ -76,10 +76,12 @@ def ignore_data_loaders(train_loader, val_loader):
 
 
 def get_dict(module):
-    if module == "data":
+    if module == "model":
         return 0
     elif module == "train":
         return 1
+    elif module == "kCV":
+        return 2
     else:
         raise ValueError("Module doesn't exist")
 
@@ -89,7 +91,6 @@ def hyper_parameter_opt(
     parameter_values: list,
     module: str,
     params: list,
-    type_run,
     data_matrix=None,
     data_label=None,
 ):
@@ -100,7 +101,7 @@ def hyper_parameter_opt(
     else:
         original_value = params[get_dict(module)][hyper_parameter]
 
-    original_data_set = params[get_dict("data")]
+    # original_data_set = params[get_dict("data")]
     color = ["red", "blue"]
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
@@ -119,7 +120,7 @@ def hyper_parameter_opt(
     for idx, value in enumerate(parameter_values):
 
         params[get_dict(module)][hyper_parameter] = value
-        score = kCV(*params)
+        score = kCV(**params[get_dict("kCV")])
         scores.append(score)
         if hyper_parameter == "layer_dim":
             x1 = np.ones_like(score) * input_dim
@@ -134,14 +135,12 @@ def hyper_parameter_opt(
 
     ax2.boxplot(scores, tick_labels=x2)
     ax2.set_title(f"Hyper parameter: {hyper_parameter}")
-    fig2.savefig(
-        "../figures/hyper_param_tune_mlp/" + hyper_parameter + "_boxplot" + type_run
-    )
+    fig2.savefig("../figures/hyper_param_opt/" + hyper_parameter + "_boxplot")
 
     ax1.grid()
     ax1.set_title(f"Hyper parameter: {hyper_parameter}")
     fig1.tight_layout()
-    fig1.savefig("../figures/hyper_param_tune_mlp/" + hyper_parameter + type_run)
+    fig1.savefig("../figures/hyper_param_opt/" + hyper_parameter)
     params[get_dict(module)][hyper_parameter] = original_value
 
     if redo_data:
