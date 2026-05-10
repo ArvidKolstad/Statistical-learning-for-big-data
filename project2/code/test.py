@@ -163,7 +163,7 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     axes[0].set_ylabel("Mean accuracy")
     axes[0].set_title("Effect of k features")
     axes[0].grid(alpha=0.4)
-    axes[0].x_scale("log")
+    axes[0].set_xscale("log")
 
     # --- lmbda ---
     l_vals = sorted(set(r["lmbda"] for r in results))
