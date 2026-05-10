@@ -1,5 +1,8 @@
 import numpy as np
 import joblib
+from train_utils import kCV, hyper_parameter_opt
+from f_test_filter_selection import f_score_filter
+import torch
 
 from xgboost import XGBClassifier
 from sklearn.model_selection import cross_val_score
@@ -28,27 +31,38 @@ class XGBoost:
         self.model = joblib.load(filename)
         return self
 
+    def train(self, train_data, val_data, k_val=None):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        x_train, y_train = train_data
+        x_val, y_val = val_data
+
+        if k_val:
+            x_train, _, selected_idx = f_score_filter(
+                x_train, y_train, k_val, return_scores=True
+            )
+            x_val = x_val[:, selected_idx]
+
+        x_train, y_train = torch.from_numpy(x_train).to(device), torch.from_numpy(
+            y_train
+        ).to(device)
+
+        self.fit(x_train, y_train)
+        score = self.score(x_val, y_val)
+        return score
+
 
 # Train model
-def train_XGB(
-    x_train,
-    y_train,
-    settings,
-    n_folds=10,
-    save_model=None):
+def train_XGB(x_train, y_train, settings, n_folds=10, save_model=None):
 
     xgb = XGBoost(**settings)
 
     # Calculate CV scores
-    print('CV started...')
+    print("CV started...")
     scores = cross_val_score(
-        xgb.model,
-        x_train,
-        y_train,
-        cv=n_folds,
-        scoring='accuracy',
-        n_jobs=-1)
-    print('CV finished.')
+        xgb.model, x_train, y_train, cv=n_folds, scoring="accuracy", n_jobs=-1
+    )
+    print("CV finished.")
 
     # Training
     xgb.fit(x_train, y_train)
@@ -60,10 +74,7 @@ def train_XGB(
 
 
 # Evaluate model
-def evaluate_model(
-    model,
-    x_test, 
-    y_test):
+def evaluate_model(model, x_test, y_test):
 
     predictions = model.predict(x_test)
     accuracy = accuracy_score(y_test, predictions)
@@ -78,45 +89,58 @@ def main():
     training_matrix = np.load("./data/train_matrix.npy")
     # training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
 
-
     test_labels = np.load("./data/test_labels.npy")
     test_matrix = np.load("./data/test_matrix.npy")
     # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
 
-
     classifier_settings = {
         "n_estimators": 100,
-        "max_depth": 6,
+        "max_depth": 10,
         "learning_rate": 0.1,
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "objective": "binary:logistic",
         "eval_metric": "logloss",
-        "random_state": 42, # Ska kanske ändras sen när det ska repeteras
-        "n_jobs": -1}
+        "n_jobs": -1,
+        "device": "cuda" if torch.cuda.is_available() else "cpu",
+    }
+    training_settings = {"k_val": 1000}
 
-    cv_score = train_XGB(
-        training_matrix,
-        training_labels,
-        classifier_settings,
-        n_folds=10,
-        save_model="./saved_models/xgboost.pkl")
-        # save_model="./saved_models/xgboost_flipped.pkl")
+    kCV_settings = {
+        "k": 5,
+        "model_class": XGBoost,
+        "train_input": training_matrix,
+        "train_target": training_labels,
+        "model_settings": classifier_settings,
+        "training_settings": training_settings,
+        "save_model": False,
+        "model_name": "XGBoost",
+        "data_loaders": False,
+    }
+    # kCV(**kCV_settings)
 
-    print(f'Cross-validation accuracy: {cv_score:.4f}')
+    params = [classifier_settings, training_settings, kCV_settings]
 
-    loaded_model = XGBoost().load(
-        "./saved_models/xgboost.pkl")
-        # "./saved_models/xgboost_flipped.pkl")
+    values = [100, 300, 500, 700, 900, 1100, 1300, 1500, 1700]
+    hyper_parameter_opt(
+        "k_val",
+        values,
+        "train",
+        params,
+    )
 
-    test_accuracy = evaluate_model(
-        loaded_model,
-        test_matrix,
-        test_labels)
+    # save_model="./saved_models/xgboost_flipped.pkl")
 
+    # print(f"Cross-validation accuracy: {cv_score:.4f}")
 
-    print(f"Test accuracy: {test_accuracy:.4f}")
-    print("XGBoost model trained, saved, loaded, and evaluated successfully")
+    # loaded_model = XGBoost().load("./saved_models/xgboost.pkl")
+
+    # "./saved_models/xgboost_flipped.pkl")
+
+    # test_accuracy = evaluate_model(loaded_model, test_matrix, test_labels)
+
+    # print(f"Test accuracy: {test_accuracy:.4f}")
+    # print("XGBoost model trained, saved, loaded, and evaluated successfully")
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class RDAWithFilter:
             X_train, y_train, self.k_features, return_scores=True
         )
         # Apply same indices to val — no fitting on val data
-        X_val_f = X_val[:, selected_idx]
+        X_val_f = X_val[:, selected_idx]test
 
         self.rda = RegularizedDiscriminantAnalysis(**self.rda_settings)
         score = run_RDA_training(
