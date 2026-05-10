@@ -100,7 +100,6 @@ def param_sweep(
     ):
         model_settings = {
             "k_features": k_feat,
-            "in_features": k_feat,
             "classes": 2,
             "lmbda": lmbda,
             "gamma": gamma,
