@@ -91,7 +91,7 @@ class RegularizedDiscriminantAnalysis:
         accuracy = correct_classification / total_classification
         return accuracy
 
-    def train(
+    def train_params(
         self, train_data: DataLoader, val_data: DataLoader, save_confusion_matrix=None
     ):
         n_samples = np.zeros(self.classes)
@@ -150,7 +150,7 @@ def run_RDA_training(
     train_loader = DataLoader(train_set, batch_size=64)
     val_loader = DataLoader(val_set, batch_size=64)
 
-    score = model.train(train_loader, val_loader)
+    score = model.train_params(train_loader, val_loader)
 
     return score
 
