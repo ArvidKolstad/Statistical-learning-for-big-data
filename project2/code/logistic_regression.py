@@ -6,6 +6,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
+
 
 from f_test_filter_selection import f_score_filter
 from lasso_regression_selection import lasso_embedding
@@ -80,32 +82,43 @@ def find_best_k_f_test(
 
     for k in k_values:
 
-        print(f'Testing k = {k}')
+        scores = []
 
-        # Feature selection
-        x_train_reduced = f_score_filter(
-            x_train,
-            y_train,
-            k=k)
+        # FIX: CV loop (no leakage)
+        kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-        # Logistic regression
-        model = LogisticRegressionModel()
+        for train_idx, val_idx in kf.split(x_train):
 
-        # FInd CV score
-        scores = cross_val_score(
-            model.model,
-            x_train_reduced,
-            y_train,
-            cv=n_folds,
-            scoring='accuracy',
-            n_jobs=-1)
+            x_tr = x_train[train_idx]
+            y_tr = y_train[train_idx]
 
-        mean_score = scores.mean()
+            x_val = x_train[val_idx]
+            y_val = y_train[val_idx]
+
+            # Feature selection ONLY on training fold
+            x_tr_reduced, _, selected_pixel_idxs = f_score_filter(
+                x_tr,
+                y_tr,
+                k=k,
+                return_scores=True
+            )
+
+            # Apply same feature mask to validation fold
+            x_val_reduced = x_val[:, selected_pixel_idxs]
+
+            # Train model
+            model = LogisticRegressionModel()
+            model.fit(x_tr_reduced, y_tr)
+
+            # Evaluate
+            scores.append(model.score(x_val_reduced, y_val))
+
+        mean_score = np.mean(scores)
         results[k] = mean_score
 
         print(f'k = {k}, CV accuracy = {mean_score:.4f}')
 
-    best_k = max(results, key = results.get)
+    best_k = max(results, key=results.get)
 
     print(f"\nBest k found: {best_k}")
     print(f"Best CV accuracy: {results[best_k]:.4f}")
@@ -123,11 +136,9 @@ def find_best_C_lasso(
     results = {}
 
     for C in C_values:
-        print(f'Testing C = {C}')
 
         scores = []
 
-        from sklearn.model_selection import KFold
         kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
         for train_idx, val_idx in kf.split(x_train):
@@ -172,18 +183,18 @@ def main():
 
     # Load original data
     training_labels = np.load("./data/train_labels.npy")
-    training_matrix = np.load("./data/train_matrix.npy")
-    # training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+    # training_matrix = np.load("./data/train_matrix.npy")
+    training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
 
 
     test_labels = np.load("./data/test_labels.npy")
-    test_matrix = np.load("./data/test_matrix.npy")
-    # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+    # test_matrix = np.load("./data/test_matrix.npy")
+    test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
 
     # Number of features
     # feature_method = 'f_test'
     feature_method = 'lasso' # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
-    flipped = False
+    flipped = True
 
     if feature_method == 'f_test':
         k_values = [100, 200, 500, 1000, 1500, 2000, 3000]
