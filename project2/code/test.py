@@ -2,15 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
 
-from logistic_regression import LogisticRegressionModel
 from train_utils import kCV
 from f_test_filter_selection import f_score_filter
+from lasso_regression_selection import lasso_embedding
 from reg_disc import RegularizedDiscriminantAnalysis, run_RDA_training
-
-# ─────────────────────────────────────────────
-#  RDA wrapper — applies f-filter inside each
-#  fold to avoid leaking val data into selection
-# ─────────────────────────────────────────────
 
 
 class RDAWithFilter:
@@ -23,7 +18,7 @@ class RDAWithFilter:
         val_data   = (X_val,   y_val)
     """
 
-    def __init__(self, k_features, classes, lmbda, gamma, class_names):
+    def __init__(self, k_features, in_features, classes, lmbda, gamma, class_names):
         self.k_features = k_features
         self.rda_settings = {
             "in_features": k_features,
@@ -38,11 +33,19 @@ class RDAWithFilter:
         X_val, y_val = val_data
 
         # Fit filter on train, get selected indices
+        """
         X_train_f, _, selected_idx = f_score_filter(
             X_train, y_train, self.k_features, return_scores=True
         )
+        """
+        X_train_f, _, selected_idx = lasso_embedding(
+            X_train, y_train, C=self.k_features, return_info=True
+        )
+        in_features = X_train_f.shape[-1]
+        self.rda_settings["in_features"] = in_features
+
         # Apply same indices to val — no fitting on val data
-        X_val_f = X_val[:, selected_idx]test
+        X_val_f = X_val[:, selected_idx]
 
         self.rda = RegularizedDiscriminantAnalysis(**self.rda_settings)
         score = run_RDA_training(
@@ -53,40 +56,6 @@ class RDAWithFilter:
             y_val,
         )
         return score
-
-
-class LogRegWithFilter:
-    def __init__(self, k_features):
-        self.k_features = k_features
-
-    def train(self, train_data, val_data):
-        X_train, y_train = train_data
-        X_val, y_val = val_data
-
-        # Fit filter on train, get selected indices
-        X_train_f, _, selected_idx = f_score_filter(
-            X_train, y_train, self.k_features, return_scores=True
-        )
-        # Apply same indices to val — no fitting on val data
-        X_val_f = X_val[:, selected_idx]
-
-        self.log_reg = LogisticRegressionModel()
-        self.log_reg.train(X_train_f, y_train)
-        score = self.log_reg.score(X_train, y_train)
-        return score
-
-    def save(self, file_name):
-        self.log_reg.save(file_name)
-
-    def load(self, file_name):
-        self.log_reg = LogisticRegressionModel()
-        self.log_reg.load(file_name)
-        return self.log_reg
-
-
-# ─────────────────────────────────────────────
-#  Parameter sweep
-# ─────────────────────────────────────────────
 
 
 def param_sweep(
@@ -100,6 +69,7 @@ def param_sweep(
     ):
         model_settings = {
             "k_features": k_feat,
+            "in_features": k_feat,
             "classes": 2,
             "lmbda": lmbda,
             "gamma": gamma,
@@ -139,12 +109,6 @@ def param_sweep(
     return results
 
 
-# ─────────────────────────────────────────────
-#  Plotting — one subplot per parameter,
-#  averaging over the other two each time
-# ─────────────────────────────────────────────
-
-
 def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     """
     3 subplots showing mean accuracy vs each parameter independently,
@@ -162,7 +126,7 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     axes[0].set_ylabel("Mean accuracy")
     axes[0].set_title("Effect of k features")
     axes[0].grid(alpha=0.4)
-    axes[0].set_xscale("log")
+    axes[0].x_scale("log")
 
     # --- lmbda ---
     l_vals = sorted(set(r["lmbda"] for r in results))
@@ -190,20 +154,23 @@ def plot_sweep_results(results, save_path="../figures/RDA/sweep_results.png"):
     plt.show()
 
 
-# ─────────────────────────────────────────────
-#  Main
-# ─────────────────────────────────────────────
-
-
 def main():
     train_matrix = np.load("./data/train_matrix.npy")
+    # train_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+
     train_labels = np.load("./data/train_labels.npy")
 
+    test_matrix = np.load("./data/test_matrix.npy")
+    # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+
+    test_labels = np.load("./data/test_labels.npy")
+    train_data = train_matrix, train_labels
+    test_data = test_matrix, test_labels
+
+    """
     k_features_list = [100, 300, 500, 700, 900, 1000, 1500, 2000, 2500]
     lmbda_list = [0.0, 0.25, 0.5, 0.75, 1.0]
     gamma_list = [0.0, 0.2, 0.4, 0.5]
-
-    results = param_sweep(
         train_matrix,
         train_labels,
         k_folds=5,
@@ -217,6 +184,16 @@ def main():
         print(f"  k={r['k']:>5}  λ={r['lmbda']}  γ={r['gamma']}  acc={r['mean']:.4f}")
 
     plot_sweep_results(results)
+    """
+    in_features = 0.1
+    classes = 2
+    lmbda = 0.0
+    gamma = 0.1
+    model = RDAWithFilter(
+        in_features, in_features, classes, lmbda, gamma, ["Cats", "Dogs"]
+    )
+    score = model.train(train_data, test_data)
+    print(score)
 
 
 if __name__ == "__main__":
