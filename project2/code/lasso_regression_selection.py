@@ -36,9 +36,9 @@ def main():
     plt.imshow(coefs.reshape(64, 64), cmap="RdBu_r", norm=norm)
     plt.colorbar()
     plt.title("Coeffient per pixel")
+    plt.savefig("../figures/dim_filter/lasso.png")
     plt.show()
 
 
 if __name__ == "__main__":
     main()
-

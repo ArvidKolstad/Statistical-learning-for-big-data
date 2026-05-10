@@ -91,6 +91,7 @@ def hyper_parameter_opt(
     parameter_values: list,
     module: str,
     params: list,
+    model_name: str,
     data_matrix=None,
     data_label=None,
 ):
@@ -135,12 +136,14 @@ def hyper_parameter_opt(
 
     ax2.boxplot(scores, tick_labels=x2)
     ax2.set_title(f"Hyper parameter: {hyper_parameter}")
-    fig2.savefig("../figures/hyper_param_opt/" + hyper_parameter + "_boxplot")
+    fig2.savefig(
+        "../figures/hyper_param_opt/" + hyper_parameter + "_" + model_name + "_boxplot"
+    )
 
     ax1.grid()
     ax1.set_title(f"Hyper parameter: {hyper_parameter}")
     fig1.tight_layout()
-    fig1.savefig("../figures/hyper_param_opt/" + hyper_parameter)
+    fig1.savefig("../figures/hyper_param_opt/" + hyper_parameter + "_" + model_name)
     params[get_dict(module)][hyper_parameter] = original_value
 
     if redo_data:

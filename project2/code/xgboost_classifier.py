@@ -3,6 +3,7 @@ import joblib
 from train_utils import kCV, hyper_parameter_opt
 from f_test_filter_selection import f_score_filter
 import torch
+from lasso_regression_selection import lasso_embedding
 
 from xgboost import XGBClassifier
 from sklearn.model_selection import cross_val_score
@@ -31,7 +32,7 @@ class XGBoost:
         self.model = joblib.load(filename)
         return self
 
-    def train(self, train_data, val_data, k_val=None):
+    def train(self, train_data, val_data, k_val=None, lasso_c=None):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         x_train, y_train = train_data
@@ -42,6 +43,12 @@ class XGBoost:
                 x_train, y_train, k_val, return_scores=True
             )
             x_val = x_val[:, selected_idx]
+        if lasso_c:
+            x_train, _, selected_idx = lasso_embedding(
+                x_train, y_train, C=lasso_c, return_info=True
+            )
+            x_val = x_val[:, selected_idx]
+            print(x_train.shape)
 
         x_train, y_train = torch.from_numpy(x_train).to(device), torch.from_numpy(
             y_train
@@ -104,10 +111,10 @@ def main():
         "n_jobs": -1,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
     }
-    training_settings = {"k_val": 1000}
+    training_settings = {"k_val": None, "lasso_c": 0.1}
 
     kCV_settings = {
-        "k": 5,
+        "k": 10,
         "model_class": XGBoost,
         "train_input": training_matrix,
         "train_target": training_labels,
@@ -121,13 +128,8 @@ def main():
 
     params = [classifier_settings, training_settings, kCV_settings]
 
-    values = [100, 300, 500, 700, 900, 1100, 1300, 1500, 1700]
-    hyper_parameter_opt(
-        "k_val",
-        values,
-        "train",
-        params,
-    )
+    values = [1, 0.5, 0.25, 0.1, 0.05, 0.025, 0.001]
+    hyper_parameter_opt("lasso_c", values, "train", params, "xgboost")
 
     # save_model="./saved_models/xgboost_flipped.pkl")
 
