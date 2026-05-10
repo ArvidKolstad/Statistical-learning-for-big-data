@@ -3,24 +3,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
+
 def lasso_embedding(images, labels, C=1.0, return_info=False):
-    lasso = LogisticRegression(l1_ratio=1, C=C, solver='liblinear', max_iter=1000)
+    lasso = LogisticRegression(l1_ratio=1, C=C, solver="liblinear", max_iter=1000)
     lasso.fit(images, labels)
-    
-    selected_mask = lasso.coef_[0] != 0           
+
+    selected_mask = lasso.coef_[0] != 0
     filtered_images = images[:, selected_mask]
-    
+
     if return_info:
         return filtered_images, lasso.coef_[0], selected_mask
     else:
         return filtered_images
-    
+
 
 def main():
     training_matrix = np.load("./data/train_matrix.npy")
     training_labels = np.load("./data/train_labels.npy")
 
-    X_reduced, coefs, selected_mask = lasso_embedding(training_matrix, training_labels, C=0.001, return_info=True)
+    X_reduced, coefs, selected_mask = lasso_embedding(
+        training_matrix, training_labels, C=0.001, return_info=True
+    )
     print(f"Selected {X_reduced.shape[1]} pixels out of {training_matrix.shape[1]}")
 
     plt.figure()
@@ -34,6 +37,8 @@ def main():
     plt.colorbar()
     plt.title("Coeffient per pixel")
     plt.show()
-    
+
+
 if __name__ == "__main__":
     main()
+
