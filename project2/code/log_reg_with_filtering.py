@@ -1,5 +1,8 @@
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
+import os
+
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
@@ -167,6 +170,114 @@ def find_best_C_lasso(
 
     return best_C, results
 
+# Plot F-test results
+def plot_f_test_results(results):
+
+    k_vals = sorted(results.keys())
+
+    means = [
+        np.mean(results[k])
+        for k in k_vals]
+
+    stds = [
+        np.std(results[k])
+        for k in k_vals]
+
+    plt.figure(figsize=(7, 5))
+
+    plt.errorbar(
+        k_vals,
+        means,
+        yerr=stds,
+        marker='o',
+        capsize=5)
+
+    plt.xscale('log')
+
+    plt.xlabel('Number of selected features (k)')
+    plt.ylabel('CV accuracy')
+    plt.title('F-test feature selection')
+
+    plt.grid(alpha=0.3)
+
+    best_k = max(
+        results,
+        key=lambda k: np.mean(results[k]))
+
+    plt.scatter(
+        best_k,
+        np.mean(results[best_k]),
+        s=120)
+
+    plt.annotate(
+        f'Best k = {best_k}',
+        (best_k, np.mean(results[best_k])),
+        textcoords='offset points',
+        xytext=(10, 25))
+
+    plt.tight_layout()
+
+    save_path = "../figures/logreg/f_test_k_search.png"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    plt.savefig(save_path)
+
+    plt.show()
+
+
+# Plot Lasso results
+def plot_lasso_results(results):
+
+    C_vals = sorted(results.keys())
+
+    means = [
+        np.mean(results[C])
+        for C in C_vals]
+
+    stds = [
+        np.std(results[C])
+        for C in C_vals]
+
+    plt.figure(figsize=(7, 5))
+
+    plt.errorbar(
+        C_vals,
+        means,
+        yerr=stds,
+        marker='o',
+        capsize=5)
+
+    plt.xscale('log')
+
+    plt.xlabel('Lasso regularization parameter C')
+    plt.ylabel('CV accuracy')
+    plt.title('Lasso feature selection')
+
+    plt.grid(alpha=0.3)
+
+    best_C = max(
+        results,
+        key=lambda C: np.mean(results[C]))
+
+    plt.scatter(
+        best_C,
+        np.mean(results[best_C]),
+        s=120)
+
+    plt.annotate(
+        f'Best C = {best_C}',
+        (best_C, np.mean(results[best_C])),
+        textcoords='offset points',
+        xytext=(10, 25))
+
+    plt.tight_layout()
+
+    save_path = '../figures/logreg/lasso_C_search.png'
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    plt.savefig(save_path)
+
+    plt.show()
 
 
 # Evaluate model
@@ -181,20 +292,23 @@ def evaluate_model(model, x_test, y_test):
 # Main
 def main():
 
+    import os
+    os.makedirs("./figures/logreg", exist_ok=True)
+
     # Load original data
     training_labels = np.load("./data/train_labels.npy")
-    # training_matrix = np.load("./data/train_matrix.npy")
-    training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+    training_matrix = np.load("./data/train_matrix.npy")
+    # training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
 
 
     test_labels = np.load("./data/test_labels.npy")
-    # test_matrix = np.load("./data/test_matrix.npy")
-    test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+    test_matrix = np.load("./data/test_matrix.npy")
+    # test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
 
     # Number of features
     # feature_method = 'f_test'
     feature_method = 'lasso' # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
-    flipped = True
+    flipped = False
 
     if feature_method == 'f_test':
         k_values = [100, 200, 500, 1000, 1500, 2000, 3000]
@@ -204,6 +318,8 @@ def main():
             training_matrix,
             training_labels,
             k_values)
+
+        plot_f_test_results(results)
 
         # Feature selection on training and test data
         training_matrix_reduced, _, selected_pixel_idxs = f_score_filter(
@@ -224,6 +340,8 @@ def main():
             training_matrix,
             training_labels,
             C_values)
+
+        plot_lasso_results(results)
 
         training_matrix_reduced, _, mask = lasso_embedding(
             training_matrix,
