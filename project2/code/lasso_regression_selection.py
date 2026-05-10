@@ -5,12 +5,7 @@ import matplotlib.colors as mcolors
 
 
 def lasso_embedding(images, labels, C=1.0, return_info=False):
-    # lasso = LogisticRegression(l1_ratio=1, C=C, solver="liblinear", max_iter=1000)
-    lasso = LogisticRegression(
-        penalty="l1",
-        C=C,
-        solver="liblinear",
-        max_iter=1000)
+    lasso = LogisticRegression(l1_ratio=1, C=C, solver="liblinear", max_iter=1000)
     lasso.fit(images, labels)
 
     selected_mask = lasso.coef_[0] != 0
