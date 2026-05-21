@@ -1,5 +1,8 @@
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
+import os
+
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
@@ -16,19 +19,14 @@ from lasso_regression_selection import lasso_embedding
 # Wrapper class
 class LogisticRegressionModel:
     def __init__(self, **settings):
-        self.model = Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                (
-                    "clf",
-                    LogisticRegression(
-                        solver="lbfgs",
-                        max_iter=1000,
-                        random_state=42,  # Bör kanske ändras sen för repetering
-                    ),
-                ),
-            ]
-        )
+        self.model = Pipeline([
+            ('scaler', StandardScaler()),
+            ('clf', LogisticRegression(
+                solver='lbfgs',
+                max_iter=1000,
+                random_state=42 # Bör kanske ändras sen för repetering
+            ))
+        ])
 
     def fit(self, X, Y):
         self.model.fit(X, Y)
@@ -48,16 +46,25 @@ class LogisticRegressionModel:
         return self
 
 
+
 # Train model
-def train_logistic_regression(x_train, y_train, n_folds=10, save_model=None):
+def train_logistic_regression(
+    x_train, 
+    y_train, 
+    n_folds=10, 
+    save_model=None):
 
     model = LogisticRegressionModel()
 
-    print("CV started...")
+    print('CV started...')
     scores = cross_val_score(
-        model.model, x_train, y_train, cv=n_folds, scoring="accuracy", n_jobs=-1
-    )
-    print("CV finished.")
+        model.model,
+        x_train,
+        y_train,
+        cv=n_folds,
+        scoring='accuracy',
+        n_jobs=-1)
+    print('CV finished.')
 
     model.fit(x_train, y_train)
 
@@ -68,7 +75,11 @@ def train_logistic_regression(x_train, y_train, n_folds=10, save_model=None):
 
 
 # Use CV to find the best number of features for f test
-def find_best_k_f_test(x_train, y_train, k_values, n_folds=10):
+def find_best_k_f_test(
+    x_train,
+    y_train,
+    k_values,
+    n_folds=10):
 
     results = {}
 
@@ -89,7 +100,10 @@ def find_best_k_f_test(x_train, y_train, k_values, n_folds=10):
 
             # Feature selection ONLY on training fold
             x_tr_reduced, _, selected_pixel_idxs = f_score_filter(
-                x_tr, y_tr, k=k, return_scores=True
+                x_tr,
+                y_tr,
+                k=k,
+                return_scores=True
             )
 
             # Apply same feature mask to validation fold
@@ -105,7 +119,7 @@ def find_best_k_f_test(x_train, y_train, k_values, n_folds=10):
         mean_score = np.mean(scores)
         results[k] = mean_score
 
-        print(f"k = {k}, CV accuracy = {mean_score:.4f}")
+        print(f'k = {k}, CV accuracy = {mean_score:.4f}')
 
     best_k = max(results, key=results.get)
 
@@ -116,7 +130,11 @@ def find_best_k_f_test(x_train, y_train, k_values, n_folds=10):
 
 
 # Use CV to find best number of features for Lasso
-def find_best_C_lasso(x_train, y_train, C_values, n_folds=10):
+def find_best_C_lasso(
+    x_train,
+    y_train,
+    C_values,
+    n_folds=10):
 
     results = {}
 
@@ -131,7 +149,8 @@ def find_best_C_lasso(x_train, y_train, C_values, n_folds=10):
             X_tr, X_val = x_train[train_idx], x_train[val_idx]
             y_tr, y_val = y_train[train_idx], y_train[val_idx]
 
-            X_tr_red, _, mask = lasso_embedding(X_tr, y_tr, C=C, return_info=True)
+            X_tr_red, _, mask = lasso_embedding(
+                X_tr, y_tr, C=C, return_info=True)
 
             X_val_red = X_val[:, mask]
 
@@ -140,7 +159,7 @@ def find_best_C_lasso(x_train, y_train, C_values, n_folds=10):
 
             scores.append(model.score(X_val_red, y_val))
 
-        results[C] = np.mean(scores)
+        results[C] = np.mean(scores)      
 
         print(f"C = {C}, CV = {results[C]:.4f}")
 
@@ -150,6 +169,115 @@ def find_best_C_lasso(x_train, y_train, C_values, n_folds=10):
     print(f"Best CV: {results[best_C]:.4f}")
 
     return best_C, results
+
+# Plot F-test results
+def plot_f_test_results(results):
+
+    k_vals = sorted(results.keys())
+
+    means = [
+        np.mean(results[k])
+        for k in k_vals]
+
+    stds = [
+        np.std(results[k])
+        for k in k_vals]
+
+    plt.figure(figsize=(7, 5))
+
+    plt.errorbar(
+        k_vals,
+        means,
+        yerr=stds,
+        marker='o',
+        capsize=5)
+
+    plt.xscale('log')
+
+    plt.xlabel('Number of selected features (k)')
+    plt.ylabel('CV accuracy')
+    plt.title('F-test feature selection')
+
+    plt.grid(alpha=0.3)
+
+    best_k = max(
+        results,
+        key=lambda k: np.mean(results[k]))
+
+    plt.scatter(
+        best_k,
+        np.mean(results[best_k]),
+        s=120)
+
+    plt.annotate(
+        f'Best k = {best_k}',
+        (best_k, np.mean(results[best_k])),
+        textcoords='offset points',
+        xytext=(10, 25))
+
+    plt.tight_layout()
+
+    save_path = "../figures/logreg/f_test_k_search_flipped.png"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    plt.savefig(save_path)
+
+    plt.show()
+
+
+# Plot Lasso results
+def plot_lasso_results(results):
+
+    C_vals = sorted(results.keys())
+
+    means = [
+        np.mean(results[C])
+        for C in C_vals]
+
+    stds = [
+        np.std(results[C])
+        for C in C_vals]
+
+    plt.figure(figsize=(7, 5))
+
+    plt.errorbar(
+        C_vals,
+        means,
+        yerr=stds,
+        marker='o',
+        capsize=5)
+
+    plt.xscale('log')
+
+    plt.xlabel('Lasso regularization parameter C')
+    plt.ylabel('CV accuracy')
+    plt.title('Lasso feature selection')
+
+    plt.grid(alpha=0.3)
+
+    best_C = max(
+        results,
+        key=lambda C: np.mean(results[C]))
+
+    plt.scatter(
+        best_C,
+        np.mean(results[best_C]),
+        s=120)
+
+    plt.annotate(
+        f'Best C = {best_C}',
+        (best_C, np.mean(results[best_C])),
+        textcoords='offset points',
+        xytext=(10, 25))
+
+    plt.tight_layout()
+
+    save_path = '../figures/logreg/lasso_C_search_flipped.png'
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    plt.savefig(save_path)
+
+    plt.show()
 
 
 # Evaluate model
@@ -164,30 +292,45 @@ def evaluate_model(model, x_test, y_test):
 # Main
 def main():
 
-    # Load original data
-    training_labels = np.load("./data/train_labels.npy")
-    # training_matrix = np.load("./data/train_matrix.npy")
-    training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+    import os
+    os.makedirs("./figures/logreg", exist_ok=True)
 
+    # Load original labels
+    training_labels = np.load("./data/train_labels.npy")
     test_labels = np.load("./data/test_labels.npy")
-    # test_matrix = np.load("./data/test_matrix.npy")
-    test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+
+    # Load matrices
+    flipped = True
+
+    if flipped:
+        training_matrix = np.load("./data/train_matrix_0.5_flipped.npy")
+        test_matrix = np.load("./data/test_matrix_0.5_flipped.npy")
+    else:
+        training_matrix = np.load("./data/train_matrix.npy")
+        test_matrix = np.load("./data/test_matrix.npy")
+
 
     # Number of features
     # feature_method = 'f_test'
-    feature_method = "f_test"  # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
-    flipped = True
+    feature_method = 'lasso' # Behöver lasso = LogisticRegression(penalty="l1",C=C,solver="liblinear",max_iter=1000)i lasso_embedding
 
-    if feature_method == "f_test":
+    if feature_method == 'f_test':
         k_values = [100, 200, 500, 1000, 1500, 2000, 3000]
 
         # Find best k or C
-        best_k, results = find_best_k_f_test(training_matrix, training_labels, k_values)
+        best_k, results = find_best_k_f_test(
+            training_matrix,
+            training_labels,
+            k_values)
+
+        plot_f_test_results(results)
 
         # Feature selection on training and test data
         training_matrix_reduced, _, selected_pixel_idxs = f_score_filter(
-            training_matrix, training_labels, k=best_k, return_scores=True
-        )
+            training_matrix, 
+            training_labels, 
+            k=best_k,
+            return_scores=True)
 
         test_matrix_reduced = test_matrix[:, selected_pixel_idxs]
 
@@ -197,33 +340,47 @@ def main():
     elif feature_method == "lasso":
         C_values = [0.001, 0.01, 0.1, 1.0]
 
-        best_C, results = find_best_C_lasso(training_matrix, training_labels, C_values)
+        best_C, results = find_best_C_lasso(
+            training_matrix,
+            training_labels,
+            C_values)
+
+        plot_lasso_results(results)
 
         training_matrix_reduced, _, mask = lasso_embedding(
-            training_matrix, training_labels, C=best_C, return_info=True
-        )
+            training_matrix,
+            training_labels,
+            C=best_C,
+            return_info=True)
 
         test_matrix_reduced = test_matrix[:, mask]
 
     else:
         raise ValueError("Feature method must be 'f_test' or 'lasso'")
 
+
     # Choose path name
-    suffix = "_flipped" if flipped else ""
+    suffix = '_flipped' if flipped else ''
     path = f"./saved_models/logistic_regression_{feature_method}{suffix}.pkl"
+
 
     # Train model
     cv_score = train_logistic_regression(
-        training_matrix_reduced, training_labels, n_folds=10, save_model=path
-    )
+        training_matrix_reduced,
+        training_labels,
+        n_folds=10,
+        save_model=path)
 
     print(f"Cross-validation accuracy: {cv_score:.4f}")
 
     # Load saved model
     loaded_model = LogisticRegressionModel().load(path)
-
+    
     # Evaluate on test data
-    test_accuracy = evaluate_model(loaded_model, test_matrix_reduced, test_labels)
+    test_accuracy = evaluate_model(
+        loaded_model,
+        test_matrix_reduced,
+        test_labels)
 
     print(f"Test accuracy: {test_accuracy:.4f}")
     print("Model trained, saved, loaded, and evaluated successfully")
@@ -231,4 +388,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
