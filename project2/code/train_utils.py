@@ -69,12 +69,6 @@ def kCV(
     return fold_score
 
 
-def ignore_data_loaders(train_loader, val_loader):
-    train_data = np.concatenate([data.numpy() for data in train_loader], axis=0)
-    val_data = np.concatenate([data.numpy() for data in val_loader], axis=0)
-    return train_data, val_data
-
-
 def get_dict(module):
     if module == "model":
         return 0
@@ -102,7 +96,7 @@ def hyper_parameter_opt(
     else:
         original_value = params[get_dict(module)][hyper_parameter]
 
-    # original_data_set = params[get_dict("data")]
+    original_data_set = params[get_dict("data")]
     color = ["red", "blue"]
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
