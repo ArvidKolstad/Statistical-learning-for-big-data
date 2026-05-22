@@ -19,7 +19,7 @@ class AnimalPictures(Dataset):
 
 
 def split_data():
-    keep_data_frac = 0.4
+    keep_data_frac = 0.3
     PATHIM = "data/cnd_large/images.csv"
     PATHLB = "data/cnd_large/labels.csv"
 

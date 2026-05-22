@@ -135,6 +135,8 @@ def kCV_outer(
         hyper_parameter_opt(model_adapter, train_batch, fold)
         model_adapter.clean_model()
 
+        model_adapter.train_params(train_batch)
+
         preds, labels = model_adapter.validate(val_batch)
 
         correct_classification = np.sum(labels == preds)
