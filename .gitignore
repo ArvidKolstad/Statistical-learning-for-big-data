@@ -193,4 +193,8 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
-project3/data/
+
+project3/data/train_matrix.npy
+project3/data/train_labels.npy
+
+

@@ -11,9 +11,9 @@ from sklearn.decomposition import PCA
 @dataclass
 class BaseTrainConfig:
     search_space: list[Any]
-    seed: list[int] = field(default_factory=lambda: [6, 7, 42, 67, 69])
-    R: int = 5
-    K: int = 10
+    seed: list[int] = field(default_factory=lambda: [6, 7, 42])
+    R: int = 3
+    K: int = 5
     L: int = 5
 
 

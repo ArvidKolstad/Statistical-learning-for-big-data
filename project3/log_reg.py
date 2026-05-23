@@ -1,10 +1,8 @@
-from dataclasses import dataclass
 from train_pipeline import BaseTrainConfig, BaseModelAdapter
 from sklearn.linear_model import LogisticRegression
 
 
-@dataclass
-class RDAModelAdapter(BaseModelAdapter[BaseTrainConfig]):
+class LogRegAdapter(BaseModelAdapter[BaseTrainConfig]):
     def train_params(self, train_batch: list):
         train_images, train_labels = train_batch
         train_images = self.dimred.fit_transform(train_images, y=train_labels)
