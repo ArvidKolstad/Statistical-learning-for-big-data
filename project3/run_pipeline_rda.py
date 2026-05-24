@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from reg_disc import RDAModelAdapter, RDATrainConfig, RegularizedDiscriminantAnalysis
 from train_pipeline import ModelConfig, run_pipeline
 from skopt.space import Integer, Real, Categorical
@@ -26,8 +27,10 @@ def main():
     )
     model_adapter = RDAModelAdapter(model_config, "./models/RDA")
 
-    in_data = np.load("./data/train_matrix.npy")
-    out_data = np.load("./data/train_labels.npy")
+    df = pd.read_csv("./data/data_500.csv")
+    in_data = df["label"].to_numpy()
+    out_data = df.drop(columns="label").to_numpy()
+
     data = [in_data, out_data]
     run_pipeline(model_adapter, data)
 

@@ -40,8 +40,8 @@ def split_data():
     df_train = df_train
 
     df_train = df.sample(frac=1).reset_index(drop=True)
-    train_labels = df_train["label"].to_numpy()
-    train_matrix = df_train.drop(columns="label").to_numpy()
+    # train_labels = df_train["label"].to_numpy()
+    # train_matrix = df_train.drop(columns="label").to_numpy()
     """
     np.save("./data/train_labels", train_labels)
     np.save("./data/train_matrix", train_matrix)
@@ -50,11 +50,12 @@ def split_data():
 
 
 def main():
+
     labels = np.load("./data/train_labels.npy")
     matrix = np.load("./data/train_matrix.npy")
     df = pd.DataFrame({"label": labels, "matrix": matrix})
 
-    df_train.to_csv("df")
+    df.to_csv("data/data_1000.csv")
 
 
 if __name__ == "__main__":
