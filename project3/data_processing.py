@@ -46,6 +46,8 @@ def split_data():
     np.save("./data/train_labels", train_labels)
     np.save("./data/train_matrix", train_matrix)
     """
+    df["label"] = df["label"].astype(int)
+
     df_train.to_csv("data/data_500.csv", index=False)
 
 
@@ -58,6 +60,7 @@ def main():
 
     df = pd.DataFrame(matrix)
     df.insert(0, "label", labels)
+    df["label"] = df["label"].astype(int)
     df.to_csv("data/data_1000.csv", index=False)
 
 

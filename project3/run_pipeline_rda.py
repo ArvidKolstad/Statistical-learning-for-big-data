@@ -25,7 +25,7 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = RDAModelAdapter(model_config, "./models/RDA")
+    model_adapter = RDAModelAdapter(model_config, "./models/RDA_500")
 
     df = pd.read_csv("./data/data_500.csv")
     in_data = df["label"].to_numpy()
