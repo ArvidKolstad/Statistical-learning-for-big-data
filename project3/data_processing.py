@@ -46,7 +46,7 @@ def split_data():
     np.save("./data/train_labels", train_labels)
     np.save("./data/train_matrix", train_matrix)
     """
-    df_train.to_csv("data_500.csv")
+    df_train.to_csv("data/data_500.csv", index=False)
 
 
 def main():
