@@ -26,7 +26,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
         train_cfg = self.config.training_settings
 
         images, labels = train_batch
-        images = self.dimred.fit_transform(images, y=labels)
+        images = torch.tensor(self.dimred.fit_transform(images, y=labels))
 
         sample_size = images.shape[0]
         train_split = int(sample_size * train_cfg.train_val_split)
@@ -43,11 +43,15 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
             dataset_train,
             batch_size=train_cfg.batch_train,
             shuffle=True,
+            num_workers=4,
+            pin_memory=True,
         )
         val_loader = DataLoader(
             dataset_val,
             batch_size=train_cfg.batch_val,
             shuffle=False,
+            num_workers=4,
+            pin_memory=True,
         )
         opt = train_cfg.optimizer(
             self.model.parameters(),
@@ -66,22 +70,27 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
 
     def validate(self, val_batch):
         self.model.eval()
+        self.model.to(self.model.device)
         val_images, val_labels = val_batch
-        val_images = self.dimred.transform(val_images)
+        val_images = (
+            torch.tensor(self.dimred.transform(val_images))
+            .to(self.model.device)
+            .float()
+        )
 
         with torch.no_grad():
-            logits = self.model(val_images)
+            logits = self.model(val_images).detach().cpu()
             probs = torch.sigmoid(logits)
-            preds = (probs > self.model.threshold).int()
+            preds = (probs > self.model.threshold).int().numpy()
 
         return preds, val_labels
 
 
 class LogisticRegression(nn.Module):
-    def __init__(self, input_dim, threshold=0.5):
+    def __init__(self, in_features, threshold=0.5):
         super().__init__()
-        self.input_dim = input_dim
-        self.layer = nn.Linear(input_dim, 1)
+        self.in_features = in_features
+        self.layer = nn.Linear(in_features, 1)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.threshold = threshold
 
@@ -100,12 +109,12 @@ class LogisticRegression(nn.Module):
         with torch.no_grad():
             for val_input, val_target in val_loader:
                 val_input, val_target = (
-                    val_input.to(self.device),
+                    val_input.to(self.device).float(),
                     val_target,
                 )
 
-                logits = self(val_input).cpu()
-                loss = loss_function(logits, val_target)
+                logits = self(val_input).cpu().squeeze()
+                loss = loss_function(logits, val_target.float())
 
                 total_loss += loss.item()
 
@@ -120,12 +129,12 @@ class LogisticRegression(nn.Module):
         for train_input, train_labels in train_loader:
 
             train_input, train_labels = (
-                train_input.to(self.device),
+                train_input.to(self.device).float(),
                 train_labels.to(self.device),
             )
             optimizer.zero_grad()
-            logits = self(train_input)
-            loss = loss_function(logits, train_labels)
+            logits = self(train_input).squeeze()
+            loss = loss_function(logits, train_labels.float())
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
@@ -148,17 +157,15 @@ class LogisticRegression(nn.Module):
         epochs_getting_worse = 0
         best_model = None
 
-        print(f"training running on {self.device}")
+        # print(f"training running on {self.device}")
         self.to(self.device)
 
-        for epoch in range(max_epochs):
-            print(f"Epoch: {epoch+1}")
+        for _ in range(max_epochs):
 
-            avg_loss = self.train_epoch(train_loader, loss_function, optimizer)
+            self.train_epoch(train_loader, loss_function, optimizer)
             avg_val_loss = self.validate_model(val_loader, loss_function)
 
-            print(f"Training loss: {avg_loss:.4f}, Validation loss: {avg_val_loss:.4f}")
-            scheduler.step(avg_val_loss)
+            scheduler.step()
 
             if avg_val_loss < max_loss:
                 epochs_getting_worse = 0

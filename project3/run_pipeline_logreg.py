@@ -1,28 +1,30 @@
-import numpy as np
-from log_reg import LogRegAdapter, LogisticRegressionModel
-from train_pipeline import ModelConfig, run_pipeline, BaseTrainConfig
+import pandas as pd
+from log_reg import LogRegAdapter, LogisticRegression, TorchTrainConfig
+from train_pipeline import ModelConfig, run_pipeline
 from skopt.space import Integer
 
 
 def main():
-
     hyper_params_search = [
         Integer(10, 100, name="in_features"),
     ]
-    train_config = BaseTrainConfig(hyper_params_search)
+    train_config = TorchTrainConfig(hyper_params_search)
     model_settings = {
         "in_features": 500,
     }
     model_config = ModelConfig(
         "Logistic Regressio",
-        LogisticRegressionModel,
+        LogisticRegression,
         model_settings,
         train_config,
     )
-    model_adapter = LogRegAdapter(model_config, "./models/LogReg")
+    model_adapter = LogRegAdapter(model_config, "./models/LogReg_1000")
 
-    in_data = np.load("./data/train_matrix.npy")
-    out_data = np.load("./data/train_labels.npy")
+    df = pd.read_csv("./data/data_1000.csv")
+
+    out_data = df["label"].to_numpy()
+
+    in_data = df.drop(columns="label").to_numpy(dtype=float)
     data = [in_data, out_data]
     run_pipeline(model_adapter, data)
 

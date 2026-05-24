@@ -36,13 +36,17 @@ class BaseModelAdapter(Generic[T_Config]):
         self.model = config.model_class(**config.hyperparameters)
         self.output_dir: str = save_path
         self.dimred = PCA(
-            n_components=self.config.hyperparameters["in_features"], svd_solver="full"
+            n_components=self.config.hyperparameters["in_features"],
+            svd_solver="auto",
+            random_state=42,
         )
 
     def clean_model(self):
         self.model = self.config.model_class(**self.config.hyperparameters)
         self.dimred = PCA(
-            n_components=self.config.hyperparameters["in_features"], svd_solver="full"
+            n_components=self.config.hyperparameters["in_features"],
+            svd_solver="auto",
+            random_state=42,
         )
 
     def train_params(self, train_batch) -> None:
