@@ -53,9 +53,10 @@ def main():
 
     labels = np.load("./data/train_labels.npy")
     matrix = np.load("./data/train_matrix.npy")
-    df = pd.DataFrame({"label": labels, "matrix": matrix})
 
-    df.to_csv("data/data_1000.csv")
+    df = pd.DataFrame(matrix)
+    df.insert(0, "label", labels)
+    df.to_csv("data/data_1000.csv", index=False)
 
 
 if __name__ == "__main__":
