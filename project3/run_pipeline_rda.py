@@ -7,7 +7,7 @@ from skopt.space import Integer, Real, Categorical
 def main():
 
     hyper_params_search = [
-        Integer(10, 1000, name="in_features"),
+        Integer(10, 100, name="in_features"),
         Real(0, 1, name="lmbda"),
         Real(0, 1, name="gamma"),
     ]

@@ -19,7 +19,7 @@ class AnimalPictures(Dataset):
 
 
 def split_data():
-    keep_data_frac = 0.1
+    keep_data_frac = 0.05
     PATHIM = "data/cnd_large/images.csv"
     PATHLB = "data/cnd_large/labels.csv"
 
@@ -40,16 +40,21 @@ def split_data():
     df_train = df_train
 
     df_train = df.sample(frac=1).reset_index(drop=True)
-
     train_labels = df_train["label"].to_numpy()
     train_matrix = df_train.drop(columns="label").to_numpy()
-
+    """
     np.save("./data/train_labels", train_labels)
     np.save("./data/train_matrix", train_matrix)
+    """
+    df_train.to_csv("data_500.csv")
 
 
 def main():
-    split_data()
+    labels = np.load("./data/train_labels.npy")
+    matrix = np.load("./data/train_matrix.npy")
+    df = pd.DataFrame({"label": labels, "matrix": matrix})
+
+    df_train.to_csv("df")
 
 
 if __name__ == "__main__":

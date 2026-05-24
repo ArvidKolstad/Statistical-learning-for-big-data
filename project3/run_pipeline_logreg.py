@@ -7,7 +7,7 @@ from skopt.space import Integer
 def main():
 
     hyper_params_search = [
-        Integer(10, 1000, name="in_features"),
+        Integer(10, 100, name="in_features"),
     ]
     train_config = BaseTrainConfig(hyper_params_search)
     model_settings = {

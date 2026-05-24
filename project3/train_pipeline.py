@@ -11,10 +11,12 @@ from sklearn.decomposition import PCA
 @dataclass
 class BaseTrainConfig:
     search_space: list[Any]
-    seed: list[int] = field(default_factory=lambda: [6, 7, 42])
-    R: int = 3
+    seed: list[int] = field(
+        default_factory=lambda: [6, 7, 42, 10, 57, 67, 69, 103, 43, 37]
+    )
+    R: int = 10
     K: int = 5
-    L: int = 5
+    L: int = 3
 
 
 T_Config = TypeVar("T_Config", bound=BaseTrainConfig)
