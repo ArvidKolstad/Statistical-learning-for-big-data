@@ -28,8 +28,8 @@ def main():
     model_adapter = RDAModelAdapter(model_config, "./models/RDA_500")
 
     df = pd.read_csv("./data/data_500.csv")
-    in_data = df["label"].to_numpy()
-    out_data = df.drop(columns="label").to_numpy()
+    out_data = df["label"].to_numpy()
+    in_data = df.drop(columns="label").to_numpy()
 
     data = [in_data, out_data]
     run_pipeline(model_adapter, data)
