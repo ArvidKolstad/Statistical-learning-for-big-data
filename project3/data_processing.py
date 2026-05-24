@@ -51,6 +51,8 @@ def split_data():
 
 def main():
 
+    split_data()
+
     labels = np.load("./data/train_labels.npy")
     matrix = np.load("./data/train_matrix.npy")
 
