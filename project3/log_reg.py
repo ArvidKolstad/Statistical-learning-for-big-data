@@ -43,15 +43,13 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
             dataset_train,
             batch_size=train_cfg.batch_train,
             shuffle=True,
-            num_workers=4,
-            pin_memory=True,
+            num_workers=0,
         )
         val_loader = DataLoader(
             dataset_val,
             batch_size=train_cfg.batch_val,
             shuffle=False,
-            num_workers=4,
-            pin_memory=True,
+            num_workers=0,
         )
         opt = train_cfg.optimizer(
             self.model.parameters(),
@@ -59,7 +57,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
         )
         scheduler = train_cfg.scheduler(opt, train_cfg.max_epochs)
 
-        self.model.train_params(
+        best_model = self.model.train_params(
             train_cfg.max_epochs,
             train_loader,
             val_loader,
@@ -67,6 +65,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
             opt,
             scheduler,
         )
+        self.model.load_state_dict(best_model)
 
     def validate(self, val_batch):
         self.model.eval()
@@ -157,7 +156,6 @@ class LogisticRegression(nn.Module):
         epochs_getting_worse = 0
         best_model = None
 
-        # print(f"training running on {self.device}")
         self.to(self.device)
 
         for _ in range(max_epochs):
@@ -170,7 +168,7 @@ class LogisticRegression(nn.Module):
             if avg_val_loss < max_loss:
                 epochs_getting_worse = 0
                 max_loss = avg_val_loss
-                best_model = self.state_dict
+                best_model = self.state_dict()
             else:
                 epochs_getting_worse += 1
             if epochs_getting_worse >= stopper:
