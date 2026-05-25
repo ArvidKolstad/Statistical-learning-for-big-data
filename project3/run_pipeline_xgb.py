@@ -26,8 +26,8 @@ def main():
         "colsample_bytree": 0.8,
         "objective": "binary:logistic",
         "random_state": 42,
-        # "device": "cuda",
-        "device": "cpu",
+        "device": "cuda",
+        # "device": "cpu",
     }
 
     model_config = ModelConfig(
