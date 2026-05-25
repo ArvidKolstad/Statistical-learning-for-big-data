@@ -35,9 +35,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = XGBModelAdapter(model_config, "./models/XGB_500")
+    model_adapter = XGBModelAdapter(model_config, "./models/XGB_250")
 
-    df = pd.read_csv("./data/data_500.csv")
+    df = pd.read_csv("./data/data_250.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
