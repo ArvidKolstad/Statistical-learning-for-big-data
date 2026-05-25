@@ -104,7 +104,7 @@ def hyper_parameter_opt(
         if isinstance(next_config, list):
             for dimension, val in zip(training_settings.search_space, next_config):
                 model_adapter.config.hyperparameters[dimension.name] = val
-                print(f"Now testing for {dimension.name} = {val:.4f}")
+                print(f"Now testing for {dimension.name} = {val}")
 
         else:
             raise TypeError(
