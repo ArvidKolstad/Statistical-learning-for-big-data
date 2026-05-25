@@ -33,7 +33,7 @@ def main():
     )
     model_adapter = KNNModelAdapter(model_config, "./models/XGB_1000")
 
-    df = pd.read_csv("./data/data_1000.csv.csv")
+    df = pd.read_csv("./data/data_1000.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()

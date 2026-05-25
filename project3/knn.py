@@ -11,12 +11,13 @@ class KNNModelAdapter(BaseModelAdapter[BaseTrainConfig]):
 
     def validate(self, val_batch):
         val_images, val_labels = val_batch
+        val_images = self.dimred.transform(val_images)
         preds = self.model.predict(val_images)
         return preds, val_labels
 
 
 class KNNClassifier:
-    def __ini__(
+    def __init__(
         self,
         in_features,
         n_neighbors,
