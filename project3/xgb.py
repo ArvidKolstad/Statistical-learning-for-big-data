@@ -1,6 +1,7 @@
 from xgboost import XGBClassifier
 from train_pipeline import BaseTrainConfig, BaseModelAdapter
 from dataclasses import dataclass
+import torch
 
 
 @dataclass
@@ -18,17 +19,21 @@ class XGBModelAdapter(BaseModelAdapter[XGBTrainConfig]):
         sample_size = images.shape[0]
         train_split = int(sample_size * train_cfg.train_val_split)
 
-        train_images = images[:train_split]
-        train_labels = labels[:train_split]
-        val_images = images[train_split:]
-        val_labels = labels[train_split:]
+        train_images = torch.tensor(images[:train_split]).to("cuda")
+        train_labels = torch.tensor(labels[:train_split]).to("cuda")
+        val_images = torch.tensor(images[train_split:]).to("cuda")
+        val_labels = torch.tensor(labels[train_split:]).to("cuda")
 
         self.model.fit(
-            train_images, train_labels, eval_set=[val_images, val_labels], verbose=100
+            train_images,
+            train_labels,
+            eval_set=[(val_images, val_labels)],
+            verbose=None,
         )
 
     def validate(self, val_batch):
         val_images, val_labels = val_batch
+        val_images = torch.tensor(self.dimred.transform(val_images)).to("cuda")
         preds = self.model.predict(val_images)
 
         return preds, val_labels

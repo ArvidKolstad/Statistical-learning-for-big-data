@@ -30,14 +30,14 @@ def main():
     }
 
     model_config = ModelConfig(
-        "Regularized Discriminant Analysis",
+        "XGBoost Classifer",
         XGBoostClassifier,
         model_settings,
         train_config,
     )
     model_adapter = XGBModelAdapter(model_config, "./models/XGB_1000")
 
-    df = pd.read_csv("./data/data_1000.csv.csv")
+    df = pd.read_csv("./data/data_1000.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
