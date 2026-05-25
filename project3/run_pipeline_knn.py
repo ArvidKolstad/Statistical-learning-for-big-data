@@ -31,9 +31,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = KNNModelAdapter(model_config, "./models/KNN_1000")
+    model_adapter = KNNModelAdapter(model_config, "./models/KNN_500")
 
-    df = pd.read_csv("./data/data_1000.csv")
+    df = pd.read_csv("./data/data_500.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
