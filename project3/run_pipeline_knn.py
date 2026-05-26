@@ -31,6 +31,7 @@ def main():
         model_settings,
         train_config,
     )
+
     model_adapter = KNNModelAdapter(model_config, "./models/KNN_500")
 
     df = pd.read_csv("./data/data_500.csv")
