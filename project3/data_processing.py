@@ -19,7 +19,7 @@ class AnimalPictures(Dataset):
 
 
 def split_data():
-    keep_data_frac = 0.05
+    keep_data_frac = 0.025
     PATHIM = "data/cnd_large/images.csv"
     PATHLB = "data/cnd_large/labels.csv"
 
@@ -37,9 +37,8 @@ def split_data():
         df_label = df[df["label"] == label]
         df_label_train = df_label.sample(frac=keep_data_frac)
         df_train = pd.concat([df_train, df_label_train])
-    df_train = df_train
 
-    df_train = df.sample(frac=1).reset_index(drop=True)
+    df_train = df_train.sample(frac=1).reset_index(drop=True)
     # train_labels = df_train["label"].to_numpy()
     # train_matrix = df_train.drop(columns="label").to_numpy()
     """
@@ -48,20 +47,12 @@ def split_data():
     """
     df["label"] = df["label"].astype(int)
 
-    df_train.to_csv("data/data_500.csv", index=False)
+    df_train.to_csv("data/data_250.csv", index=False)
 
 
 def main():
 
     split_data()
-
-    labels = np.load("./data/train_labels.npy")
-    matrix = np.load("./data/train_matrix.npy")
-
-    df = pd.DataFrame(matrix)
-    df.insert(0, "label", labels)
-    df["label"] = df["label"].astype(int)
-    df.to_csv("data/data_1000.csv", index=False)
 
 
 if __name__ == "__main__":
