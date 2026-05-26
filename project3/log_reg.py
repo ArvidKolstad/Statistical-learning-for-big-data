@@ -80,7 +80,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
         with torch.no_grad():
             logits = self.model(val_images).detach().cpu()
             probs = torch.sigmoid(logits)
-            preds = (probs > self.model.threshold).int().numpy()
+            preds = (probs > self.model.threshold).int().squeeze().numpy()
 
         return preds, val_labels
 
