@@ -36,9 +36,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = XGBModelAdapter(model_config, "./models/XGB_imbalanced_1000")
+    model_adapter = XGBModelAdapter(model_config, "./models/XGB_imbalanced_250")
 
-    df = pd.read_csv("./data/data_cat200_dog800.csv")
+    df = pd.read_csv("./data/data_cat50_dog200.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
