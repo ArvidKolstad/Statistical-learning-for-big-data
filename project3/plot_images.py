@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from performance_score import get_p_scores
 import numpy as np
 
 
@@ -24,6 +25,30 @@ def plot_performance(data):
         [data["logreg"][:, 2], data["KNN"][:, 2], data["XGB"][:, 2], data["RDA"][:, 2]]
     )
     ax[0].boxplot(accuracy, labels=names)
+    ax[1].boxplot(f1, labels=names)
+    ax[2].boxplot(aoc, labels=names)
+
+    ax[0].set_ylabel("Accuracy")
+    ax[1].set_ylabel("F1-Score")
+    ax[2].set_ylabel("AOC")
+
+    ax[0].set_titel("Accuracy")
+    ax[1].set_titel("F1-Score")
+    ax[2].set_titel("AOC-curve")
+
+    fig.tight_layout()
+    fig.savefig("figures_part1/preformace")
+
+
+def plot_p_matrix(model_paths):
+
+    accuracy = get_p_scores(model_paths, "accuracy", 10)
+    f1 = get_p_scores(model_paths, "f1-score", 10)
+    aoc = get_p_scores(model_paths, "AOC", 10)
+
+    fig, ax = plt.subplots(1, 3, figsize=(16, 5))
+
+    ax[0].matshow(accuracy)
     ax[1].boxplot(f1, labels=names)
     ax[2].boxplot(aoc, labels=names)
 

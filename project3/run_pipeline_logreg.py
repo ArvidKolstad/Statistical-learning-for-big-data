@@ -18,9 +18,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = LogRegAdapter(model_config, "./models/LogReg_1000")
+    model_adapter = LogRegAdapter(model_config, "./models/LogReg_250")
 
-    df = pd.read_csv("./data/data_1000.csv")
+    df = pd.read_csv("./data/data_250.csv")
 
     out_data = df["label"].to_numpy()
 
