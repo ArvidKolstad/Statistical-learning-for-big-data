@@ -26,8 +26,8 @@ def main():
         "colsample_bytree": 0.8,
         "objective": "binary:logistic",
         "random_state": 42,
-        "device": "cuda",
-        # "device": "cpu",
+        # "device": "cuda",
+        "device": "cpu",
     }
 
     model_config = ModelConfig(
@@ -36,9 +36,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = XGBModelAdapter(model_config, "./models/XGB_250")
+    model_adapter = XGBModelAdapter(model_config, "./models/XGB_500")
 
-    df = pd.read_csv("./data/data_250.csv")
+    df = pd.read_csv("./data/data_500.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
