@@ -31,14 +31,10 @@ def main():
         model_settings,
         train_config,
     )
-<<<<<<< HEAD
 
-    model_adapter = KNNModelAdapter(model_config, "./models/KNN_500")
-=======
-    model_adapter = KNNModelAdapter(model_config, "./models/KNN_250")
->>>>>>> Filippa
+    model_adapter = KNNModelAdapter(model_config, "./models/KNN_1000")
 
-    df = pd.read_csv("./data/data_250.csv")
+    df = pd.read_csv("./data/data_1000.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
