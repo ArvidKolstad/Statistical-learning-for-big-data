@@ -46,13 +46,13 @@ def split_data(keep_data_fracs = [0.1, 0.1]):
     """
     df["label"] = df["label"].astype(int)
 
-    df_train.to_csv(f"data/data_cat{int(10000*keep_data_fracs[0])}_dog{int(10000*keep_data_fracs[1])}.csv", index=False)
+    df_train.to_csv(f"data/data_cat{int(5000*keep_data_fracs[0])}_dog{int(5000*keep_data_fracs[1])}.csv", index=False)
 
 
 def main():
     imbalance_array = np.array([0.2, 0.8])
     for x in [0.1, 0.05, 0.025]:
-        split_data(x*imbalance_array)
+        split_data(x*imbalance_array*2)
 
 if __name__ == "__main__":
     main()

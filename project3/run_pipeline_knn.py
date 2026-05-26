@@ -8,7 +8,7 @@ def main():
 
     hyper_params_search = [
         Integer(10, 100, name="in_features"),
-        Integer(10, 500, name="n_neighbors"),
+        Integer(10, 50, name="n_neighbors"),
         Real(1.0, 2.0, name="p"),
         Categorical(["uniform", "distance"], name="weights"),
     ]
@@ -32,9 +32,15 @@ def main():
         train_config,
     )
 
+<<<<<<< HEAD
     model_adapter = KNNModelAdapter(model_config, "./models/KNN_1000")
 
     df = pd.read_csv("./data/data_1000.csv")
+=======
+    model_adapter = KNNModelAdapter(model_config, "./models/KNN_250_imbalanced")
+
+    df = pd.read_csv("./data/data_cat50_dog200.csv")
+>>>>>>> ce6ac44 (fixed imbalanced data)
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
