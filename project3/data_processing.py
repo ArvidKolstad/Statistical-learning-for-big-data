@@ -18,8 +18,7 @@ class AnimalPictures(Dataset):
         return x, y
 
 
-def split_data():
-    keep_data_frac = 0.025
+def split_data(keep_data_fracs = [0.1, 0.1]):
     PATHIM = "data/cnd_large/images.csv"
     PATHLB = "data/cnd_large/labels.csv"
 
@@ -35,7 +34,7 @@ def split_data():
     df_train = pd.DataFrame()
     for label in unique_labels:
         df_label = df[df["label"] == label]
-        df_label_train = df_label.sample(frac=keep_data_frac)
+        df_label_train = df_label.sample(frac=keep_data_fracs[label])
         df_train = pd.concat([df_train, df_label_train])
 
     df_train = df_train.sample(frac=1).reset_index(drop=True)
@@ -47,13 +46,13 @@ def split_data():
     """
     df["label"] = df["label"].astype(int)
 
-    df_train.to_csv("data/data_250.csv", index=False)
+    df_train.to_csv(f"data/data_cat{int(10000*keep_data_fracs[0])}_dog{int(10000*keep_data_fracs[1])}.csv", index=False)
 
 
 def main():
-
-    split_data()
-
+    imbalance_array = np.array([0.2, 0.8])
+    for x in [0.1, 0.05, 0.025]:
+        split_data(x*imbalance_array)
 
 if __name__ == "__main__":
     main()
