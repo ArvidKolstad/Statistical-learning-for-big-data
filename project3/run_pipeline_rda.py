@@ -25,9 +25,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = RDAModelAdapter(model_config, "./models/RDA_1000_imbalance")
+    model_adapter = RDAModelAdapter(model_config, "./models/RDA_500_imbalance")
 
-    df = pd.read_csv("./data/data_cat200_dog800.csv")
+    df = pd.read_csv("./data/data_cat100_dog400.csv")
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
 
