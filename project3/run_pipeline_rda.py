@@ -14,7 +14,7 @@ def main():
     ]
     train_config = RDATrainConfig(hyper_params_search)
     model_settings = {
-        "in_features": 100,
+        "in_features": 500,
         "classes": 2,
         "lmbda": 0.5,
         "gamma": 0.5,
