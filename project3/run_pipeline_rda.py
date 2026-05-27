@@ -14,7 +14,7 @@ def main():
     ]
     train_config = RDATrainConfig(hyper_params_search)
     model_settings = {
-        "in_features": 100,
+        "in_features": 500,
         "classes": 2,
         "lmbda": 0.5,
         "gamma": 0.5,
@@ -25,9 +25,9 @@ def main():
         model_settings,
         train_config,
     )
-    model_adapter = RDAModelAdapter(model_config, "./models/RDA_500_imbalance")
+    model_adapter = RDAModelAdapter(model_config, "./models/RDA_1000_random")
 
-    df = pd.read_csv("./data/data_cat100_dog400.csv")
+    df = pd.read_csv("./data/data_random.csv")
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()
 
