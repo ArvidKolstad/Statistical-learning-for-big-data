@@ -149,4 +149,10 @@ class RegularizedDiscriminantAnalysis:
 
         self.covariance_matrices = S_reg
 
-        self.inverse_covariances = inv(S_reg)
+        try:
+            self.inverse_covariances = inv(S_reg)
+        except np.linalg.LinAlgError as e:
+            print(f"Singular matrix encountered: {e}", flush=True)
+            # Add small jitter and retry
+            jitter = 1e-6 * np.eye(self.in_features)
+            self.inverse_covariances = inv(S_reg + jitter)
