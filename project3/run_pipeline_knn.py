@@ -32,15 +32,9 @@ def main():
         train_config,
     )
 
-<<<<<<< HEAD
-    model_adapter = KNNModelAdapter(model_config, "./models/KNN_1000")
+    model_adapter = KNNModelAdapter(model_config, "./models/KNN_1000_random")
 
-    df = pd.read_csv("./data/data_1000.csv")
-=======
-    model_adapter = KNNModelAdapter(model_config, "./models/KNN_250_imbalanced")
-
-    df = pd.read_csv("./data/data_cat50_dog200.csv")
->>>>>>> ce6ac44 (fixed imbalanced data)
+    df = pd.read_csv("./data/data_random.csv")
 
     out_data = df["label"].to_numpy()
     in_data = df.drop(columns="label").to_numpy()

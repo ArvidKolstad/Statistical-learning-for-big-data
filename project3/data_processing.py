@@ -44,7 +44,7 @@ def split_data(keep_data_fracs=[0.1, 0.1]):
     np.save("./data/train_labels", train_labels)
     np.save("./data/train_matrix", train_matrix)
     """
-    df["label"] = df["label"].astype(int).sample(frac=1).reset_index(drop=True)
+    df_train["label"] = df_train["label"].sample(frac=1).reset_index(drop=True)
 
     df_train.to_csv(f"data/data_random.csv", index=False)
 
