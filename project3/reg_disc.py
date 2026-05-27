@@ -19,7 +19,7 @@ class RDAModelAdapter(BaseModelAdapter[RDATrainConfig]):
 
         dataset = AnimalPictures(train_images, train_labels)
         train_loader = DataLoader(
-            dataset, batch_size=train_cfg.batch_size, num_workers=1
+            dataset, batch_size=train_cfg.batch_size, num_workers=0
         )
         self.model.train(train_loader)
 
@@ -149,4 +149,10 @@ class RegularizedDiscriminantAnalysis:
 
         self.covariance_matrices = S_reg
 
-        self.inverse_covariances = inv(S_reg)
+        try:
+            self.inverse_covariances = inv(S_reg)
+        except np.linalg.LinAlgError as e:
+            print(f"Singular matrix encountered: {e}", flush=True)
+            # Add small jitter and retry
+            jitter = 1e-6 * np.eye(self.in_features)
+            self.inverse_covariances = inv(S_reg + jitter)

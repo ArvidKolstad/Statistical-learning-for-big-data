@@ -19,10 +19,15 @@ class XGBModelAdapter(BaseModelAdapter[XGBTrainConfig]):
         sample_size = images.shape[0]
         train_split = int(sample_size * train_cfg.train_val_split)
 
-        train_images = torch.tensor(images[:train_split]).to("cuda")
-        train_labels = torch.tensor(labels[:train_split]).to("cuda")
-        val_images = torch.tensor(images[train_split:]).to("cuda")
-        val_labels = torch.tensor(labels[train_split:]).to("cuda")
+        # train_images = torch.tensor(images[:train_split]).to("cuda")
+        # train_labels = torch.tensor(labels[:train_split]).to("cuda")
+        # val_images = torch.tensor(images[train_split:]).to("cuda")
+        # val_labels = torch.tensor(labels[train_split:]).to("cuda")
+
+        train_images = torch.tensor(images[:train_split]).to("cpu")
+        train_labels = torch.tensor(labels[:train_split]).to("cpu")
+        val_images = torch.tensor(images[train_split:]).to("cpu")
+        val_labels = torch.tensor(labels[train_split:]).to("cpu")
 
         self.model.fit(
             train_images,
@@ -33,7 +38,8 @@ class XGBModelAdapter(BaseModelAdapter[XGBTrainConfig]):
 
     def validate(self, val_batch):
         val_images, val_labels = val_batch
-        val_images = torch.tensor(self.dimred.transform(val_images)).to("cuda")
+        # val_images = torch.tensor(self.dimred.transform(val_images)).to("cuda")
+        val_images = torch.tensor(self.dimred.transform(val_images)).to("cpu")
         preds = self.model.predict(val_images)
 
         return preds, val_labels
