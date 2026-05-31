@@ -193,6 +193,10 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
+home_exam/data/X_TE.csv
+home_exam/data/X_TR.csv
+home_exam/data/y_TR.csv
+
 
 
 

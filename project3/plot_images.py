@@ -32,7 +32,7 @@ def plot_performance(paths, samples):
 
     ax[0].set_ylabel("Accuracy")
     ax[1].set_ylabel("F1-Score")
-    ax[2].set_ylabel("AOC")
+    ax[2].set_ylabel("AUC")
 
     ax[0].set_ylim(0.4, 1)
     ax[1].set_ylim(0.4, 1)
@@ -40,7 +40,7 @@ def plot_performance(paths, samples):
 
     ax[0].set_title("Accuracy")
     ax[1].set_title("F1-Score")
-    ax[2].set_title("AOC-curve")
+    ax[2].set_title("AUC-curve")
 
     fig.tight_layout()
     fig.savefig(f"figures_part1/preformace_{samples}")
@@ -119,14 +119,14 @@ def plot_bayes_analysis(model_paths, samples):
 
     ax[0].set_title("Accuracy")
     ax[1].set_title("F1-Score")
-    ax[2].set_title("AOC")
+    ax[2].set_title("AUC")
 
     ax[0].legend()
     ax[1].legend()
     ax[2].legend()
 
     fig.tight_layout()
-    fig.savefig(f"./figures_part2/barchart_{samples}.png")
+    fig.savefig(f"./figures_part1/barchart_{samples}.png")
 
 
 def main():
@@ -138,7 +138,7 @@ def main():
         f"RDA_{samples}.npy",
     ]
     plot_performance(model_paths, samples)
-    # plot_bayes_analysis(model_paths, samples)
+    plot_bayes_analysis(model_paths, samples)
 
 
 if __name__ == "__main__":
