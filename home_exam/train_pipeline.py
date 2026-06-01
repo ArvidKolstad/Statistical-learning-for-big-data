@@ -45,7 +45,7 @@ class BaseModelAdapter(Generic[T_Config]):
         self.model = self.config.model_class(**self.config.hyperparameters)
         self.dimred = PCA(
             n_components=self.config.hyperparameters["in_features"],
-            whiten=False
+            whiten=False,
             svd_solver="auto",
             random_state=42,
         )
@@ -79,7 +79,6 @@ def kCV_inner(
         model_adapter.train_params(train_batch)
         preds, labels = model_adapter.validate(val_batch)
 
-        # accuracy
         correct_classification = np.sum(labels == preds)
         total_classification = labels.shape[0]
         accuracy = correct_classification / total_classification
@@ -132,9 +131,10 @@ def kCV_outer(
     if multiple_runs:
         skf.random_state = training_settings.seed[multiple_runs]
 
-    fold_scores = np.zeros((training_settings.K, 3))
+    fold_scores = np.zeros((training_settings.K, 2))
+    x, y = data
 
-    for fold, (train_idx, val_idx) in enumerate(skf.split(*data)):
+    for fold, (train_idx, val_idx) in enumerate(skf.split(x, y)):
         print(f"Outer fold: {fold +1 }/{training_settings.K}")
         train_batch = [values[train_idx] for values in data]
         val_batch = [values[val_idx] for values in data]
@@ -150,10 +150,10 @@ def kCV_outer(
         total_classification = labels.shape[0]
 
         accuracy = correct_classification / total_classification
-        f1 = f1_score(labels, preds)
-        auc = roc_auc_score(labels, preds)
+        f1 = f1_score(labels, preds, average="weighted")
+        # auc = roc_auc_score(labels, preds)
 
-        scores = np.array([accuracy, f1, auc])
+        scores = np.array([accuracy, f1])
 
         fold_scores[fold] = scores
     return fold_scores
