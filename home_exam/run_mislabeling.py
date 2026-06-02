@@ -11,11 +11,9 @@ from skopt.space import Integer, Real, Categorical
 from data_process import get_data_balance
 
 
-def shuffle_labels_disjoint(labels):
-    """
-    Changes all labels in a 1D array to a different number
-    while preserving the exact same proportions/fractions.
-    """
+def mislabel_data():
+    inputs = np.load("./data/200_input.npy")
+    labels = np.load("./data/200_labels.npy")
     unique_labels = np.unique(labels)
 
     new_labels = np.roll(unique_labels, shift=1)
@@ -23,7 +21,8 @@ def shuffle_labels_disjoint(labels):
     label_map = dict(zip(unique_labels, new_labels))
 
     vectorized_map = np.vectorize(lambda x: label_map[x])
-    return vectorized_map(labels)
+    labels = vectorized_map(labels)
+    return inputs, labels
 
 
 def to_tuple_key(arr):
@@ -38,6 +37,7 @@ def main():
     train_labels = np.load(f"./data/{sample}_labels.npy")
     imbalance = torch.tensor(get_data_balance(train_labels)).float()
     train_data = [train_inputs, train_labels]
+    wrong_data = mislabel_data()
 
     # logreg config
     hyper_params_logreg = [
@@ -113,11 +113,15 @@ def main():
         model_config_rda, f"./models/1c/RDA_{sample}", check_mislabeling=True
     )
 
-    mislabeled_rda, wrong_data_rda = get_mislabeling(model_adapter_rda, train_data)
-    mislabeled_logreg, wrong_data_logreg = get_mislabeling(
-        model_adapter_logreg, train_data
+    mislabeled_rda, wrong_data_rda = get_mislabeling(
+        model_adapter_rda, train_data, wrong_data
     )
-    mislabeled_knn, wrong_data_knn = get_mislabeling(model_adapter_knn, train_data)
+    mislabeled_logreg, wrong_data_logreg = get_mislabeling(
+        model_adapter_logreg, train_data, wrong_data
+    )
+    mislabeled_knn, wrong_data_knn = get_mislabeling(
+        model_adapter_knn, train_data, wrong_data
+    )
 
     df_rda = pd.DataFrame(mislabeled_rda)
     df_logreg = pd.DataFrame(mislabeled_logreg)
