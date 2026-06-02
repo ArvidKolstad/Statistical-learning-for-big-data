@@ -1,11 +1,11 @@
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, roc_auc_score
 from dataclasses import dataclass, field
 from typing import Any, Type, Optional, Generic, TypeVar
 from skopt import Optimizer
 from skopt.space import Integer, Real, Categorical
-from sklearn.decomposition import PCA
 
 
 @dataclass
@@ -35,20 +35,9 @@ class BaseModelAdapter(Generic[T_Config]):
         self.config = config
         self.model = config.model_class(**config.hyperparameters)
         self.output_dir: str = save_path
-        self.dimred = PCA(
-            n_components=self.config.hyperparameters["in_features"],
-            svd_solver="auto",
-            random_state=42,
-        )
 
     def clean_model(self):
         self.model = self.config.model_class(**self.config.hyperparameters)
-        self.dimred = PCA(
-            n_components=self.config.hyperparameters["in_features"],
-            whiten=False,
-            svd_solver="auto",
-            random_state=42,
-        )
 
     def train_params(self, train_batch) -> None:
         raise NotImplementedError
@@ -70,7 +59,6 @@ def kCV_inner(
     fold_score = np.zeros(training_settings.L)
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(*hyper_opt_data)):
-        print(f"Inner fold: {fold +1 }/{training_settings.L}")
         train_batch = [values[train_idx] for values in hyper_opt_data]
         val_batch = [values[val_idx] for values in hyper_opt_data]
 
@@ -104,7 +92,6 @@ def hyper_parameter_opt(
         if isinstance(next_config, list):
             for dimension, val in zip(training_settings.search_space, next_config):
                 model_adapter.config.hyperparameters[dimension.name] = val
-                print(f"Now testing for {dimension.name} = {val}")
 
         else:
             raise TypeError(
@@ -133,8 +120,11 @@ def kCV_outer(
 
     fold_scores = np.zeros((training_settings.K, 2))
     x, y = data
+    fold_acc = np.zeros((training_settings.K, 7))
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(x, y)):
+        class_based_accuracy = []
+
         print(f"Outer fold: {fold +1 }/{training_settings.K}")
         train_batch = [values[train_idx] for values in data]
         val_batch = [values[val_idx] for values in data]
@@ -146,27 +136,88 @@ def kCV_outer(
 
         preds, labels = model_adapter.validate(val_batch)
 
+        for cls in np.unique(labels):
+            mask = cls == labels
+            class_based_accuracy.append(np.sum(preds[mask] == cls) / np.sum(mask))
+
         correct_classification = np.sum(labels == preds)
         total_classification = labels.shape[0]
 
         accuracy = correct_classification / total_classification
         f1 = f1_score(labels, preds, average="weighted")
-        # auc = roc_auc_score(labels, preds)
 
         scores = np.array([accuracy, f1])
 
         fold_scores[fold] = scores
-    return fold_scores
+        fold_acc[fold] = class_based_accuracy
+    return fold_scores, fold_acc
 
 
 def run_pipeline(model_adapter: BaseModelAdapter, data: list[np.ndarray]):
+
     training_settings = model_adapter.config.training_settings
     scores = []
+    class_acc = []
     for R in range(training_settings.R):
         print(f"Now running R: {R+1}/{training_settings.R}")
-        scores.append(kCV_outer(model_adapter, data, R))
+        score, acc = kCV_outer(model_adapter, data, R)
+        scores.append(score)
+        class_acc.append(acc)
     scores = np.concatenate(scores, axis=0)
+    class_acc = np.concatenate(class_acc, axis=0)
+
     np.save(model_adapter.output_dir, scores)
+    np.save(model_adapter.output_dir + "_fold_acc", class_acc)
+
+
+def run_defect_pipeline(model_adapter: BaseModelAdapter, data: list[np.ndarray], size):
+    training_settings = model_adapter.config.training_settings
+    scores = []
+    class_acc = []
+    seed = [42, 2, 4, 7, 6, 9, 94, 23, 62, 65]
+    index = [
+        7,
+        37,
+        100,
+        141,
+        158,
+        179,
+        210,
+        228,
+        276,
+        308,
+        427,
+        519,
+        550,
+        558,
+        597,
+        752,
+        762,
+        796,
+        809,
+    ]
+
+    inputs = pd.read_csv("./data/X_TR.csv").to_numpy()
+    inputs = np.delete(inputs, index, axis=1)
+
+    for R in range(training_settings.R):
+        print(f"Now running R: {R+1}/{training_settings.R}")
+        rng = np.random.default_rng(seed=seed[R])
+        idx = rng.choice(np.arange(inputs.shape[-1]), size=100, replace=False)
+        added_features = inputs[:, idx]
+        small_input, labels = data
+        disrupted_input = np.concatenate([small_input, added_features], axis=1)
+        data_disrupt = [disrupted_input, labels]
+        model_adapter.config.hyperparameters["in_features"] = disrupted_input.shape[-1]
+
+        score, acc = kCV_outer(model_adapter, data_disrupt, R)
+        scores.append(score)
+        class_acc.append(acc)
+    scores = np.concatenate(scores, axis=0)
+    class_acc = np.concatenate(class_acc, axis=0)
+
+    np.save(model_adapter.output_dir, scores)
+    np.save(model_adapter.output_dir + "_fold_acc", class_acc)
 
 
 def main():

@@ -29,14 +29,13 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
         train_cfg = self.config.training_settings
 
         images, labels = train_batch
-        images = torch.tensor(self.dimred.fit_transform(images, y=labels)).float()
 
         sample_size = images.shape[0]
         train_split = int(sample_size * train_cfg.train_val_split)
 
-        train_images = images[:train_split]
+        train_images = torch.tensor(images[:train_split]).float()
         train_labels = torch.tensor(labels[:train_split]).long()
-        val_images = images[train_split:]
+        val_images = torch.tensor(images[train_split:]).float()
         val_labels = torch.tensor(labels[train_split:]).long()
 
         dataset_train = B11_dataset(train_images, train_labels)
@@ -73,11 +72,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
         self.model.eval()
         self.model.to(self.model.device)
         val_images, val_labels = val_batch
-        val_images = (
-            torch.tensor(self.dimred.transform(val_images))
-            .to(self.model.device)
-            .float()
-        )
+        val_images = torch.tensor(val_images).float().to(self.model.device)
 
         with torch.no_grad():
             logits = self.model(val_images).detach().cpu()

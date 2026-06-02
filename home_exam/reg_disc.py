@@ -15,17 +15,15 @@ class RDAModelAdapter(BaseModelAdapter[RDATrainConfig]):
     def train_params(self, train_batch: list):
         train_cfg = self.config.training_settings
         train_images, train_labels = train_batch
-        train_images = self.dimred.fit_transform(train_images, y=train_labels)
 
         dataset = B11_dataset(train_images, train_labels)
         train_loader = DataLoader(
-            dataset, batch_size=train_cfg.batch_size, num_workers=0
+            dataset, batch_size=train_cfg.batch_size, num_workers=5
         )
         self.model.train(train_loader)
 
     def validate(self, val_batch):
         val_images, val_labels = val_batch
-        val_images = self.dimred.transform(val_images)
 
         preds = self.model.decision_rule(val_images)
 
@@ -158,6 +156,5 @@ class RegularizedDiscriminantAnalysis:
             self.inverse_covariances = inv(S_reg)
         except np.linalg.LinAlgError as e:
             print(f"Singular matrix encountered: {e}", flush=True)
-            # Add small jitter and retry
             jitter = 1e-6 * np.eye(self.in_features)
             self.inverse_covariances = inv(S_reg + jitter)

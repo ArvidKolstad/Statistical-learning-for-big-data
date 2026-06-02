@@ -149,7 +149,7 @@ def get_data_different_sample_sizes():
     df_big = df_big.sample(frac=1, random_state=42).reset_index(drop=True)
 
     unique_classes = df_big["class"].unique()
-    sizes = [500, 1000, len(df_big)]
+    sizes = [200, 500, 1000, 3000, 5000, len(df_big)]
     splits = {}
 
     for size in sizes:
@@ -172,6 +172,132 @@ def get_data_different_sample_sizes():
         np.save(f"./data/{size}_input", subset.drop(columns="class").to_numpy())
 
 
+def get_random_labels():
+    df_labels = pd.read_csv("./data/y_TR.csv")
+    df_labels = df_labels - 1
+    df_labels = df_labels.sample(frac=1).reset_index(drop=True)
+    np.save("./data/7680_labels_random", df_labels["class"].to_numpy())
+
+
+def plot_variance_between_classes():
+    df_input = pd.read_csv("./data/X_TR.csv")
+    df_labels = pd.read_csv("./data/y_TR.csv")
+    index = [
+        7,
+        37,
+        100,
+        141,
+        158,
+        179,
+        210,
+        228,
+        276,
+        308,
+        427,
+        519,
+        550,
+        558,
+        597,
+        752,
+        762,
+        796,
+        809,
+    ]
+
+    index_labels = [
+        "7",
+        "37",
+        "100",
+        "141",
+        "158",
+        "179",
+        "210",
+        "228",
+        "276",
+        "308",
+        "427",
+        "519",
+        "550",
+        "558",
+        "597",
+        "752",
+        "762",
+        "796",
+        "809",
+    ]
+    df_input = df_input.iloc[:, index]
+
+    unique_labels = np.unique(df_labels.to_numpy())
+    class_variance_feature = []
+    for cls in unique_labels:
+        inputs = df_input[df_labels["class"] == cls].to_numpy()
+        class_variance_feature.append(np.std(inputs, axis=0))
+    class_variance_feature = np.vstack(class_variance_feature)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(class_variance_feature)
+    for i in range(len(unique_labels)):
+        for j in range(len(index)):
+            ax.text(
+                j,
+                i,
+                class_variance_feature[i, j].round(2),
+                ha="center",
+                va="center",
+                color="w",
+            )
+    ax.set_xticks(range(len(index_labels)), labels=index_labels)
+    ax.set_yticks(range(len(unique_labels)), labels=unique_labels)
+
+    ax.set_xlabel("Feature index")
+    ax.set_ylabel("Class")
+
+    ax.set_title("Variance of features between classes")
+    fig.tight_layout()
+    fig.savefig("./figures/vis_data/variance_of_classes.pdf")
+
+
+def plot_covar_matrix():
+    inputs = np.load("./data/7680_input.npy")
+    cov_matrix = np.corrcoef(inputs, rowvar=False)
+    index = [
+        "7",
+        "37",
+        "100",
+        "141",
+        "158",
+        "179",
+        "210",
+        "228",
+        "276",
+        "308",
+        "427",
+        "519",
+        "550",
+        "558",
+        "597",
+        "752",
+        "762",
+        "796",
+        "809",
+    ]
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.imshow(cov_matrix)
+    for i in range(len(index)):
+        for j in range(len(index)):
+            ax.text(
+                j, i, cov_matrix[i, j].round(2), ha="center", va="center", color="w"
+            )
+    ax.set_xticks(range(len(index)), labels=index)
+    ax.set_yticks(range(len(index)), labels=index)
+    ax.set_xlabel("Feature Index")
+    ax.set_ylabel("Feature Index")
+
+    ax.set_title("Covariance Matrix")
+    fig.tight_layout()
+    fig.savefig("./figures/vis_data/covariance_matrix.pdf")
+
+
 def get_data_balance(labels):
     unique_labels = np.unique(labels)
     balance = []
@@ -182,8 +308,11 @@ def get_data_balance(labels):
 
 
 def main():
-    visualize_dataset()
-    get_data_different_sample_sizes()
+    # visualize_dataset()
+    # get_data_different_sample_sizes()
+    # plot_covar_matrix()
+    # get_random_labels()
+    plot_variance_between_classes()
 
 
 if __name__ == "__main__":
