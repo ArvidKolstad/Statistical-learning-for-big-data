@@ -24,7 +24,7 @@ def main():
         "min_child_weight": 3,
         "subsample": 0.8,
         "colsample_bytree": 0.8,
-        "objective": "binary:logistic",
+        "objective": ":logistic",
         "random_state": 42,
         "device": "cuda",
     }
