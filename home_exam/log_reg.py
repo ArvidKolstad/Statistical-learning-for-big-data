@@ -81,6 +81,9 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
 
         return preds, val_labels
 
+    def get_probability(self, val_input) -> np.ndarray:
+        return self.model.get_probabilities(val_input)
+
 
 class LogisticRegression(nn.Module):
     def __init__(self, in_features, number_of_classes, l2=0.001):
@@ -96,6 +99,12 @@ class LogisticRegression(nn.Module):
     def forward(self, x):
         output = self.layer(x)
         return output
+
+    def get_probabilities(self, inputs) -> np.ndarray:
+        with torch.no_grad():
+            inputs = torch.tensor(inputs).float()
+            probability = torch.softmax(self(inputs), dim=-1).numpy()
+            return probability
 
     def validate_model(self, val_loader: DataLoader, loss_function) -> float:
         self.eval()

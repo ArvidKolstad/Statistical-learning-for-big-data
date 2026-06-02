@@ -47,7 +47,7 @@ def get_rope_size(performance_score, runs):
     return best_rope
 
 
-def get_p_scores(model_paths, performance_score, runs, rope=0.01):
+def get_p_scores_compare(model_paths, performance_score, runs, rope=0.01):
     index = get_performance_idx(performance_score)
     models = []
     comparisons = combinations(model_paths, 2)
@@ -57,6 +57,21 @@ def get_p_scores(model_paths, performance_score, runs, rope=0.01):
         model_2 = np.load("models/" + path2)[:, index]
         models.append(two_on_single(model_1, model_2, rope=rope, runs=runs))
     return models
+
+
+def get_p_defect(normal_path, defect_paths, performance_score, runs, rope=0.01):
+    index = get_performance_idx(performance_score)
+    lefts, ropes, rights = [], [], []
+
+    model_1 = np.load("models/" + normal_path)[:, index]
+    for path2 in defect_paths:
+        model_2 = np.load("models/" + path2)[:, index]
+        p_left, p_rope, p_right = two_on_single(model_1, model_2, rope=rope, runs=runs)
+        lefts.append(p_left)
+        ropes.append(p_rope)
+        rights.append(p_right)
+
+    return lefts, ropes, rights
 
 
 def load_data(paths):
@@ -80,9 +95,9 @@ def plot_performance(samples):
 
     for i, sample in enumerate(samples):
         models = [
-            f"KNN_{sample}.npy",
-            f"LogReg_{sample}.npy",
-            f"RDA_{sample}.npy",
+            f"1a/KNN_{sample}.npy",
+            f"1a/LogReg_{sample}.npy",
+            f"1a/RDA_{sample}.npy",
         ]
         data = load_data(models)
         for j, name in enumerate(names):
@@ -114,6 +129,68 @@ def plot_performance(samples):
     fig.savefig(f"./figures/problem1/performance.pdf")
 
 
+def plot_bayes_data_destruction(sizes):
+    colors = ["#e74c3c", "#3498db", "#2ecc71"]
+
+    ropes = [0.0056, 0.0107, 0.0062]
+    names = ["KNN", "LogReg", "RDA"]
+    f1_knn = []
+    f1_log = []
+    f1_rda = []
+    f1_probs = [f1_knn, f1_log, f1_rda]
+
+    for idx, name in enumerate(names):
+        original_model = "1a/{name_7680.npy}"
+        disrupted_models = [f"1b/{name}_{size}.npy" for size in sizes]
+
+        f1_left, f1_rope, f1_right = get_p_defect(
+            original_model, disrupted_models, "f1-score", 10, rope=ropes[idx]
+        )
+        for i, size in enumerate(sizes):
+            f1_stacks = {
+                "P(Original > Disrupted)": f1_left[i],
+                "P(Original = Disrupted)": f1_rope[i],
+                "P(Original < Disrupted)": f1_right[i],
+            }
+            f1_probs[idx].append(f1_stacks)
+
+    fig, ax = plt.subplots(1, 3, figsize=(23, 6))
+
+    names = ["KNN", "KNN", "LogReg"]
+    attributes = ["P(Left > Right)", "P(Left = Right)", "P(Left < Right)"]
+
+    x = np.arange(len(sizes))
+    width = 0.25
+
+    for i in range(3):
+        for attr_idx, attribute in enumerate(attributes):
+            measurements = [f1_probs[i][j][attribute] for j in range(len(sizes))]
+
+            offset = (attr_idx - 1) * width
+
+            rects = ax[i].bar(
+                x + offset,
+                measurements,
+                width,
+                label=attribute,
+                color=colors[attr_idx],
+            )
+
+            ax[i].bar_label(rects, padding=3, fmt="%.2f")
+
+        ax[i].set_xticks(x)
+        ax[i].set_xticklabels(sizes)
+
+        ax[i].set_ylim(0, 1.15)
+        ax[i].set_ylabel("Probability")
+        ax[i].set_title(names[i], fontsize=14)
+        ax[i].legend()
+        ax[i].grid(axis="y", linestyle="--", alpha=0.7)
+
+    fig.tight_layout()
+    fig.savefig("./figures/problem1/bayes_comp.pdf")
+
+
 def plot_bayes_analysis(samples):
     colors = ["#e74c3c", "#3498db", "#2ecc71"]
 
@@ -130,7 +207,7 @@ def plot_bayes_analysis(samples):
             f"RDA_{sample}.npy",
         ]
 
-        f1_models = get_p_scores(models, "f1-score", 10, rope=0.040)
+        f1_models = get_p_scores_compare(models, "f1-score", 10, rope=0.040)
         for idx, model_comp in enumerate(f1_models):
             f1_left, f1_rope, f1_right = model_comp
             f1_stacks = {
@@ -234,11 +311,11 @@ def plot_class_accuracy(samples):
 
 def main():
     samples = [200, 500, 1000, 3000, 5000, 7680]
-    # plot_performance(samples)
+    plot_performance(samples)
     # plot_bayes_analysis(model, samples)
     # get_rope_size("f1-score", 10)
     # plot_bayes_analysis(samples)
-    plot_class_accuracy(samples)
+    # plot_class_accuracy(samples)
 
 
 if __name__ == "__main__":

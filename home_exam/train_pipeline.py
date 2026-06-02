@@ -31,10 +31,13 @@ class ModelConfig(Generic[T_Config]):
 
 
 class BaseModelAdapter(Generic[T_Config]):
-    def __init__(self, config: ModelConfig[T_Config], save_path: str):
+    def __init__(
+        self, config: ModelConfig[T_Config], save_path: str, check_mislabeling=False
+    ):
         self.config = config
         self.model = config.model_class(**config.hyperparameters)
         self.output_dir: str = save_path
+        self.check_mislabeling = check_mislabeling
 
     def clean_model(self):
         self.model = self.config.model_class(**self.config.hyperparameters)
@@ -43,6 +46,9 @@ class BaseModelAdapter(Generic[T_Config]):
         raise NotImplementedError
 
     def validate(self, val_batch) -> tuple[np.ndarray, np.ndarray]:
+        raise NotImplementedError
+
+    def get_probability(self, val_input) -> np.ndarray:
         raise NotImplementedError
 
 
@@ -106,10 +112,29 @@ def hyper_parameter_opt(
         model_adapter.config.hyperparameters[hyper_param] = value
 
 
+def check_mislabel(model, val_input, val_labels, threshold=0.05) -> list[dict]:
+    probs = model.get_probability(val_input)
+    outputs, val_labels = model.validate(val_input, val_labels)
+    suspicious_samples = []
+
+    for idx, (sample, label) in enumerate(zip(probs, val_labels)):
+        assert np.argmax(sample) == outputs[idx]
+        if sample[int(label)] < threshold:
+            suspicious_samples.append(
+                {
+                    "input value": val_input[idx],
+                    "guessed label": outputs[idx],
+                    "actual label": label,
+                }
+            )
+    return suspicious_samples
+
+
 def kCV_outer(
     model_adapter: BaseModelAdapter,
     data: list[np.ndarray],
     multiple_runs: Optional[int],
+    mislabeled_data=[],
 ):
     training_settings = model_adapter.config.training_settings
 
@@ -121,6 +146,7 @@ def kCV_outer(
     fold_scores = np.zeros((training_settings.K, 2))
     x, y = data
     fold_acc = np.zeros((training_settings.K, 7))
+    mislabel_data = []
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(x, y)):
         class_based_accuracy = []
@@ -150,14 +176,57 @@ def kCV_outer(
 
         fold_scores[fold] = scores
         fold_acc[fold] = class_based_accuracy
+        if model_adapter.check_mislabeling:
+            val_inputs, val_labels = val_batch
+            suspicious_samples = check_mislabel(
+                model_adapter.model, val_inputs, val_labels
+            )
+            for new_sample in suspicious_samples:
+                already_sus = False
+                for sample in mislabel_data:
+                    if np.array_equal(sample["input_value"], new_sample["input_value"]):
+                        already_sus = True
+                if not already_sus:
+                    mislabel_data.append(new_sample)
+
+    if model_adapter.check_mislabeling:
+        inputs, labels = mislabeled_data
+        wrong_samples = check_mislabel(model_adapter.model, inputs, labels)
+
+        return mislabel_data, wrong_samples
+
     return fold_scores, fold_acc
+
+
+def get_mislabeling(
+    model_adapter: BaseModelAdapter, data: list[np.ndarray], mislabeled_data
+):
+    training_settings = model_adapter.config.training_settings
+    mislabels = []
+    wrong_data = []
+    for R in range(training_settings.R):
+        print(f"Now running R: {R+1}/{training_settings.R}")
+        mislabel_data, wrong_data = kCV_outer(
+            model_adapter, data, R, mislabeled_data=mislabeled_data
+        )
+
+        for new_sample in mislabel_data:
+            already_sus = False
+            for sample in mislabels:
+                if np.array_equal(sample["input_value"], new_sample["input_value"]):
+                    already_sus = True
+            if not already_sus:
+                mislabels.append(new_sample)
+    return mislabels, wrong_data
 
 
 def run_pipeline(model_adapter: BaseModelAdapter, data: list[np.ndarray]):
 
     training_settings = model_adapter.config.training_settings
+
     scores = []
     class_acc = []
+
     for R in range(training_settings.R):
         print(f"Now running R: {R+1}/{training_settings.R}")
         score, acc = kCV_outer(model_adapter, data, R)

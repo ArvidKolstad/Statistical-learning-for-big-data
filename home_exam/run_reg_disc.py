@@ -27,7 +27,7 @@ def main():
     for size in sizes:
         sample = 7680
 
-        model_adapter = RDAModelAdapter(model_config, f"./models/1b/RDA_{sample}")
+        model_adapter = RDAModelAdapter(model_config, f"./models/1b/RDA_{size}")
         train_inputs = np.load(f"./data/{sample}_input.npy")
         train_labels = np.load(f"./data/{sample}_labels.npy")
         train_data = [train_inputs, train_labels]

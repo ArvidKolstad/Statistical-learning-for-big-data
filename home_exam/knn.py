@@ -1,4 +1,5 @@
 from train_pipeline import BaseModelAdapter, BaseTrainConfig
+import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 
@@ -11,6 +12,10 @@ class KNNModelAdapter(BaseModelAdapter[BaseTrainConfig]):
         val_images, val_labels = val_batch
         preds = self.model.predict(val_images)
         return preds, val_labels
+
+    def get_probability(self, val_input) -> np.ndarray:
+        probability = self.model.predict_probability(val_input)
+        return probability
 
 
 class KNNClassifier:
@@ -42,6 +47,9 @@ class KNNClassifier:
 
     def predict(self, x):
         return self.model.predict(x)
+
+    def get_probability(self, x):
+        return self.model.predict_proba(x)
 
 
 def main():

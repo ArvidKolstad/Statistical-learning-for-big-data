@@ -32,7 +32,7 @@ def main():
             model_params,
             train_config,
         )
-        model_adapter = LogRegAdapter(model_config, f"./models/1b/LogReg_{sample}")
+        model_adapter = LogRegAdapter(model_config, f"./models/1b/LogReg_{size}")
 
         train_data = [train_inputs, train_labels]
 

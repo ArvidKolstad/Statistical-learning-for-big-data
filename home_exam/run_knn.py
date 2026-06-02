@@ -40,7 +40,7 @@ def main():
     for size in sizes:
         sample = 7680
 
-        model_adapter = KNNModelAdapter(model_config, f"./models/1b/KNN_{sample}")
+        model_adapter = KNNModelAdapter(model_config, f"./models/1b/KNN_{size}")
         train_inputs = np.load(f"./data/{sample}_input.npy")
         train_labels = np.load(f"./data/{sample}_labels.npy")
 

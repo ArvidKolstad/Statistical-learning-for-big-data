@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import softmax
 from dataclasses import dataclass
 from numpy.linalg import inv, slogdet
 from torch.utils.data import DataLoader
@@ -28,6 +29,10 @@ class RDAModelAdapter(BaseModelAdapter[RDATrainConfig]):
         preds = self.model.decision_rule(val_images)
 
         return preds, val_labels
+
+    def get_probability(self, val_input):
+        preds = self.model.predict_probalility(val_input)
+        return preds
 
 
 class RegularizedDiscriminantAnalysis:
@@ -101,6 +106,20 @@ class RegularizedDiscriminantAnalysis:
         scores = -0.5 * log_det_abs - 0.5 * quad + np.log(self.pi)
 
         return np.argmax(scores, axis=1).astype(np.int64)
+
+    def predict_probalility(self, input_array) -> np.array:
+        x = input_array
+        self.mean_vector
+        _, log_det_abs = slogdet(self.covariance_matrices)
+
+        diff = x[:, None, :] - self.mean_vector[None, :, :]
+
+        tmp = np.einsum("bki,kij->bkj", diff, self.inverse_covariances)
+        quad = (tmp * diff).sum(axis=-1)
+
+        scores = -0.5 * log_det_abs - 0.5 * quad + np.log(self.pi)
+        probability = softmax(scores, axis=1)
+        return probability
 
     def validation(self, val_loader: DataLoader) -> float:
         X_all = np.concatenate([X.numpy() for X, _ in val_loader], axis=0)
