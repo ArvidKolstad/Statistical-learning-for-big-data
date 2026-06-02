@@ -272,7 +272,7 @@ def run_defect_pipeline(model_adapter: BaseModelAdapter, data: list[np.ndarray],
     for R in range(training_settings.R):
         print(f"Now running R: {R+1}/{training_settings.R}")
         rng = np.random.default_rng(seed=seed[R])
-        idx = rng.choice(np.arange(inputs.shape[-1]), size=100, replace=False)
+        idx = rng.choice(np.arange(inputs.shape[-1]), size=size, replace=False)
         added_features = inputs[:, idx]
         small_input, labels = data
         disrupted_input = np.concatenate([small_input, added_features], axis=1)
