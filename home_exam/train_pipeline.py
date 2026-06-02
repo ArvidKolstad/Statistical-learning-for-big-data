@@ -112,9 +112,9 @@ def hyper_parameter_opt(
         model_adapter.config.hyperparameters[hyper_param] = value
 
 
-def check_mislabel(model, val_input, val_labels, threshold=0.05) -> list[dict]:
-    probs = model.get_probability(val_input)
-    outputs, val_labels = model.validate(val_input, val_labels)
+def check_mislabel(model_adapter, val_input, val_labels, threshold=0.05) -> list[dict]:
+    probs = model_adapter.get_probability(val_input)
+    outputs, val_labels = model_adapter.validate(val_input, val_labels)
     suspicious_samples = []
 
     for idx, (sample, label) in enumerate(zip(probs, val_labels)):
@@ -178,9 +178,7 @@ def kCV_outer(
         fold_acc[fold] = class_based_accuracy
         if model_adapter.check_mislabeling:
             val_inputs, val_labels = val_batch
-            suspicious_samples = check_mislabel(
-                model_adapter.model, val_inputs, val_labels
-            )
+            suspicious_samples = check_mislabel(model_adapter, val_inputs, val_labels)
             for new_sample in suspicious_samples:
                 already_sus = False
                 for sample in mislabel_data:
