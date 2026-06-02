@@ -19,7 +19,7 @@ class RDAModelAdapter(BaseModelAdapter[RDATrainConfig]):
 
         dataset = B11_dataset(train_images, train_labels)
         train_loader = DataLoader(
-            dataset, batch_size=train_cfg.batch_size, num_workers=5
+            dataset, batch_size=train_cfg.batch_size, num_workers=0
         )
         self.model.train(train_loader)
 
