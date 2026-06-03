@@ -20,6 +20,34 @@ class B11_dataset(Dataset):
         return x, y
 
 
+def get_processed_test():
+    df_input = pd.read_csv("./data/X_TE.csv")
+    index = [
+        7,
+        37,
+        100,
+        141,
+        158,
+        179,
+        210,
+        228,
+        276,
+        308,
+        427,
+        519,
+        550,
+        558,
+        597,
+        752,
+        762,
+        796,
+        809,
+    ]
+
+    df_input = df_input.iloc[:, index]
+    np.save("./data/test_set", df_input)
+
+
 def visualize_dataset():
     df_input = pd.read_csv("./data/X_TR.csv")
     df_labels = pd.read_csv("./data/y_TR.csv")
@@ -66,6 +94,7 @@ def visualize_dataset():
 
     f_statistics, p_statistics = f_regression(inputs, labels)
     saved_features_index = []
+
     for idx, f_val in enumerate(f_statistics):
         if f_val >= 10:
             saved_features_index.append(idx)
@@ -312,7 +341,8 @@ def main():
     # get_data_different_sample_sizes()
     # plot_covar_matrix()
     # get_random_labels()
-    plot_variance_between_classes()
+    # plot_variance_between_classes()
+    get_processed_test()
 
 
 if __name__ == "__main__":

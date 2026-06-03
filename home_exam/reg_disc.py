@@ -34,6 +34,15 @@ class RDAModelAdapter(BaseModelAdapter[RDATrainConfig]):
         preds = self.model.predict_probalility(val_input)
         return preds
 
+    def save_model(self):
+        self.model.save(self.output_dir)
+
+    def load_model(self):
+        self.model.load(self.output_dir)
+
+    def get_class(self, val_input):
+        return self.model.decision_rule(val_input)
+
 
 class RegularizedDiscriminantAnalysis:
     def __init__(

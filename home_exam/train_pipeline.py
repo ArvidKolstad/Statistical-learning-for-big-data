@@ -1,4 +1,5 @@
 import numpy as np
+import pickle as pkl
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, roc_auc_score
@@ -15,8 +16,8 @@ class BaseTrainConfig:
         default_factory=lambda: [6, 7, 42, 10, 57, 67, 69, 103, 43, 37]
     )
     R: int = 10
-    K: int = 5
-    L: int = 3
+    K: int = 10
+    L: int = 10
 
 
 T_Config = TypeVar("T_Config", bound=BaseTrainConfig)
@@ -32,12 +33,17 @@ class ModelConfig(Generic[T_Config]):
 
 class BaseModelAdapter(Generic[T_Config]):
     def __init__(
-        self, config: ModelConfig[T_Config], save_path: str, check_mislabeling=False
+        self,
+        config: ModelConfig[T_Config],
+        save_path: str,
+        check_mislabeling=False,
+        save_configs=False,
     ):
         self.config = config
         self.model = config.model_class(**config.hyperparameters)
         self.output_dir: str = save_path
         self.check_mislabeling = check_mislabeling
+        self.save_configs: bool = save_configs
 
     def clean_model(self):
         self.model = self.config.model_class(**self.config.hyperparameters)
@@ -48,7 +54,16 @@ class BaseModelAdapter(Generic[T_Config]):
     def validate(self, val_batch) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
 
+    def get_class(self, val_input) -> np.ndarray:
+        raise NotImplementedError
+
     def get_probability(self, val_input) -> np.ndarray:
+        raise NotImplementedError
+
+    def save_model(self) -> None:
+        raise NotImplementedError
+
+    def load_model(self) -> None:
         raise NotImplementedError
 
 
@@ -136,6 +151,8 @@ def kCV_outer(
     multiple_runs: Optional[int],
     mislabeled_data=[],
 ):
+    best_score = 0.0
+
     training_settings = model_adapter.config.training_settings
 
     skf = StratifiedKFold(n_splits=training_settings.K, shuffle=True)
@@ -179,13 +196,14 @@ def kCV_outer(
         if model_adapter.check_mislabeling:
             val_inputs, val_labels = val_batch
             suspicious_samples = check_mislabel(model_adapter, val_inputs, val_labels)
-            for new_sample in suspicious_samples:
-                already_sus = False
-                for sample in mislabel_data:
-                    if np.array_equal(sample["input_value"], new_sample["input_value"]):
-                        already_sus = True
-                if not already_sus:
-                    mislabel_data.append(new_sample)
+            mislabel_data.append(suspicious_samples)
+        if model_adapter.save_configs and (f1 > best_score):
+            with open(model_adapter.output_dir + "config.pickle", "wb") as f:
+                pkl.dump(
+                    model_adapter.config.hyperparameters,
+                    f,
+                    protocol=pkl.HIGHEST_PROTOCOL,
+                )
 
     if model_adapter.check_mislabeling:
         inputs, labels = mislabeled_data

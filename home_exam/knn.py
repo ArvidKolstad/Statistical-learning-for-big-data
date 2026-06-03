@@ -1,4 +1,5 @@
 from train_pipeline import BaseModelAdapter, BaseTrainConfig
+import pickle as pkl
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -14,8 +15,17 @@ class KNNModelAdapter(BaseModelAdapter[BaseTrainConfig]):
         return preds, val_labels
 
     def get_probability(self, val_input) -> np.ndarray:
-        probability = self.model.predict_probability(val_input)
+        probability = self.model.get_probability(val_input)
         return probability
+
+    def save_model(self):
+        self.model.save(self.output_dir)
+
+    def load_model(self):
+        self.model.load(self.output_dir)
+
+    def get_class(self, val_input):
+        return self.model.predict(val_input)
 
 
 class KNNClassifier:
@@ -50,6 +60,12 @@ class KNNClassifier:
 
     def get_probability(self, x):
         return self.model.predict_proba(x)
+
+    def save(self, path):
+        pkl.dump(self.model, open(path, "wb"))
+
+    def load(self, path):
+        self.model = pkl.load(open(path, "rb"))
 
 
 def main():

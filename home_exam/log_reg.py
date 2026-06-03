@@ -84,6 +84,12 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
     def get_probability(self, val_input) -> np.ndarray:
         return self.model.get_probabilities(val_input)
 
+    def save_model(self):
+        self.model.save(self.output_dir)
+
+    def load_model(self):
+        self.model.load(self.output_dir)
+
 
 class LogisticRegression(nn.Module):
     def __init__(self, in_features, number_of_classes, l2=0.001):
@@ -183,3 +189,10 @@ class LogisticRegression(nn.Module):
                 break
 
         return best_model
+
+    def save(self, path):
+        torch.save(self.state_dict(), path)
+
+    def load(self, path):
+        self.load_state_dict(torch.load(path, weights_only=True))
+        self.eval()
