@@ -1,11 +1,11 @@
 # Fdb version 4
-["pdflatex"] 1780689764.42209 "main.tex" "main.pdf" "main" 1780689765.06902 0
+["pdflatex"] 1780689929.26249 "main.tex" "main.pdf" "main" 1780689929.85356 0
   "../figures/problem1/bayes_comp.pdf" 1780670686.41406 17816 2c74b545fde120b7bcf06564fdfd8b91 ""
   "../figures/problem1/class_accuracy.pdf" 1780670686.87507 23239 a65e1d7631df844113da541d225cb525 ""
   "../figures/problem1/performance.pdf" 1780686012.29261 13962 6dcfd0789c9183147b500b7a519997ad ""
   "../figures/problem2/bayes_comp.pdf" 1780686012.70961 19506 892d0e8242b76881325fd76b95d044ae ""
   "../figures/problem2/performance.pdf" 1780686012.96961 16337 8d0fcfb403f47738fc9cb940e8f6f88d ""
-  "../figures/problem3/class_balance_test.pdf" 1780520395.01427 15574 cf28876047eb52291e3a00c37af69f71 ""
+  "../figures/problem3/class_balance_test.pdf" 1780689928.3896 15595 800a582cc9bca9afbb63e530ab55f356 ""
   "../figures/problem3/conf_diff_sample_size.pdf" 1780516180.23862 14530 eaf76a492fecd14b87e6a924d562cac6 ""
   "../figures/problem3/model_conf_acc_7680.pdf" 1780516180.05262 19364 754b7a51728b85e510cdef2d6a2ce3ba ""
   "../figures/problem3/test_confidence.pdf" 1780519277.89694 21578 c8c3808ca09a40ee80a2ad3919d28858 ""
@@ -129,9 +129,9 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1757582839 5528033 2de1857e87beaf98978b63b6132a9b29 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1757582939 3605800 db2d2d5241c583d393506a8a45cfd127 ""
   "/usr/local/texlive/2025/texmf.cnf" 1757582833.95572 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1780689765.00482 8665 89933f6f5f7694c6819384f2102ae5f1 "pdflatex"
-  "main.out" 1780689765.00558 916 3d0f55105929cee52142390af813d91b "pdflatex"
-  "main.tex" 1780689763.07414 25693 eed06d1ca2bb5315577ee71c5249a4bb ""
+  "main.aux" 1780689929.79094 8665 89933f6f5f7694c6819384f2102ae5f1 "pdflatex"
+  "main.out" 1780689929.79168 916 3d0f55105929cee52142390af813d91b "pdflatex"
+  "main.tex" 1780689769.90401 25693 eed06d1ca2bb5315577ee71c5249a4bb ""
   (generated)
   "main.aux"
   "main.log"
