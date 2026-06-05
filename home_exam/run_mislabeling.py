@@ -114,13 +114,13 @@ def main():
     )
 
     mislabeled_rda, wrong_data_rda = get_mislabeling(
-        model_adapter_rda, train_data, wrong_data
+        model_adapter_rda, train_data, wrong_data=wrong_data
     )
     mislabeled_logreg, wrong_data_logreg = get_mislabeling(
-        model_adapter_logreg, train_data, wrong_data
+        model_adapter_logreg, train_data, wrong_data=wrong_data
     )
     mislabeled_knn, wrong_data_knn = get_mislabeling(
-        model_adapter_knn, train_data, wrong_data
+        model_adapter_knn, train_data, wrong_data=wrong_data
     )
 
     df_rda = pd.DataFrame(mislabeled_rda)

@@ -128,7 +128,7 @@ def hyper_parameter_opt(
 
 
 def check_mislabel(model_adapter, val_batch, threshold=0.05) -> list[dict]:
-    val_input,val_labels=val_batch
+    val_input, val_labels = val_batch
     probs = model_adapter.get_probability(val_input)
     outputs, val_labels = model_adapter.validate(val_batch)
     suspicious_samples = []
@@ -150,7 +150,7 @@ def kCV_outer(
     model_adapter: BaseModelAdapter,
     data: list[np.ndarray],
     multiple_runs: Optional[int],
-    mislabeled_data=[],
+    wrong_data=[],
 ):
     best_score = 0.0
 
@@ -164,7 +164,7 @@ def kCV_outer(
     fold_scores = np.zeros((training_settings.K, 2))
     x, y = data
     fold_acc = np.zeros((training_settings.K, 7))
-    mislabel_data = []
+    mislabeled_data = []
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(x, y)):
         class_based_accuracy = []
@@ -195,9 +195,9 @@ def kCV_outer(
         fold_scores[fold] = scores
         fold_acc[fold] = class_based_accuracy
         if model_adapter.check_mislabeling:
-            val_inputs, val_labels = val_batch
-            suspicious_samples = check_mislabel(model_adapter, val_inputs, val_labels)
-            mislabel_data.append(suspicious_samples)
+            suspicious_samples = check_mislabel(model_adapter, val_batch)
+
+            mislabeled_data += suspicious_samples
         if model_adapter.save_configs and (f1 > best_score):
             with open(model_adapter.output_dir + "config.pickle", "wb") as f:
                 pkl.dump(
@@ -207,25 +207,25 @@ def kCV_outer(
                 )
 
     if model_adapter.check_mislabeling:
-        wrong_samples = check_mislabel(model_adapter, mislabeled_data)
+        print(len(wrong_data))
+        wrong_samples = check_mislabel(model_adapter, wrong_data)
 
-        return mislabel_data, wrong_samples
+        return mislabeled_data, wrong_samples
 
     return fold_scores, fold_acc
 
 
 def get_mislabeling(
-    model_adapter: BaseModelAdapter, data: list[np.ndarray], mislabeled_data
+    model_adapter: BaseModelAdapter, data: list[np.ndarray], wrong_data
 ):
     training_settings = model_adapter.config.training_settings
     mislabels = []
-    wrong_data = []
+    wrong_samples = []
     for R in range(training_settings.R):
         print(f"Now running R: {R+1}/{training_settings.R}")
-        mislabel_data, wrong_data = kCV_outer(
-            model_adapter, data, R, mislabeled_data=mislabeled_data
+        mislabel_data, wrong_samples = kCV_outer(
+            model_adapter, data, R, wrong_data=wrong_data
         )
-
         for new_sample in mislabel_data:
             already_sus = False
             for sample in mislabels:
@@ -233,7 +233,7 @@ def get_mislabeling(
                     already_sus = True
             if not already_sus:
                 mislabels.append(new_sample)
-    return mislabels, wrong_data
+    return mislabels, wrong_samples
 
 
 def run_pipeline(model_adapter: BaseModelAdapter, data: list[np.ndarray]):
