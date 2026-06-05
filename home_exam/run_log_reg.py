@@ -18,26 +18,26 @@ def main():
 
     # samples = [200, 500, 1000, 3000, 5000, 7680]
     sample = 7680
-    for size in sizes:
-        train_inputs = np.load(f"./data/{sample}_input.npy")
-        train_labels = np.load(f"./data/{sample}_labels.npy")
+    # for size in sizes:
+    train_inputs = np.load(f"./data/extreme_inputs.npy")
+    train_labels = np.load(f"./data/extreme_labels.npy")
 
-        imbalance = torch.tensor(get_data_balance(train_labels)).float()
+    imbalance = torch.tensor(get_data_balance(train_labels)).float()
 
-        train_config = TorchTrainConfig(hyper_params, class_imbalance=imbalance)
-        model_config = ModelConfig(
-            "Logistic Regression",
-            LogisticRegression,
-            model_params,
-            train_config,
-        )
-        model_adapter = LogRegAdapter(model_config, f"./models/1b/LogReg_{size}")
+    train_config = TorchTrainConfig(hyper_params, class_imbalance=imbalance)
+    model_config = ModelConfig(
+        "Logistic Regression",
+        LogisticRegression,
+        model_params,
+        train_config,
+    )
+    model_adapter = LogRegAdapter(model_config, f"./models/2a/LogReg_{sample}")
 
-        train_data = [train_inputs, train_labels]
-        # kCV_outer(model_adapter, train_data, multiple_runs=0)
+    train_data = [train_inputs, train_labels]
+    # kCV_outer(model_adapter, train_data, multiple_runs=0)
 
-        # run_pipeline(model_adapter, train_data)
-        run_defect_pipeline(model_adapter, train_data, size)
+    run_pipeline(model_adapter, train_data)
+    # run_defect_pipeline(model_adapter, train_data, size)
 
 
 if __name__ == "__main__":

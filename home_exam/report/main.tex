@@ -150,33 +150,55 @@ The results of the pipeline can be found in figure \ref{fig:performance_problem1
 
 \newpage
 \section{Question 1(b)}
-For this question a disruption to the dataset would be inserted to get the models to perform worse. Therefore I choose to insert a number of randomly choosen feature from the original 820 features to study how the models would react to this noise. I used the pipeline described in Question 1(a) to measure the performance of this and for every re-run of the pipelin I used new features so that the models so a fair picture of the problem could be presented. For all the runs I choose to use all the 7600 samples for the pipeline to get the most accurat performance decrease. To evaluate this we will look at the performance for all the models and then compare the F1-Score with Bayesian Analysis. The rope for this analysis was taken as the standard deviation of the original model.
+To address this question, a controlled disruption was introduced to the dataset to intentionally degrade model performance. Specifically, a variable number of randomly selected features from the original 820 features were injected as noise to study the models' robustness. The evaluation pipeline described in Question 1(a) was utilized to measure performance. For each iteration of the pipeline, a new set of random features was sampled to ensure an unbiased and comprehensive assessment of the models' behavior. All 7,600 samples were used across all runs to obtain the most accurate measure of performance degradation. To evaluate the impact, we analyze the performance metrics across all models and perform a Bayesian analysis to compare the F1-scores. The Region of Practical Equivalence (ROPE) for this analysis was defined based on the standard deviation of the original baseline model.
 
-In figure \ref{fig:performance} the performance of the models can be seen over the increasing number of features used to train and classify the labels. It's clear that the RDA is robust against these features and for the first couple of features the models performance increases in both accuracy and F1-Score. This is expected because of how the model can adapt to these noisy dimensions by change its hyperparameters to get closer to the LDA and native bayes which works like a l2 regularized for these parameters which could lead to these features help, instead of cluttering the signal for the class. In figure \ref{fig: Comparison_degraded} exactly this behavior were the model even takes advantage of the new features in the beginning.
+Figure~\ref{fig:performance} illustrates the performance of the models as a function of the increasing number of noisy features used during training and classification. RDA demonstrates notable robustness against this noise; in fact, for the first few added features, the model's performance increases in terms of both accuracy and F1-score. This behavior is expected given RDA's capacity to adapt to noisy dimensions by tuning its hyperparameters toward LDA or Naive Bayes. This mechanism acts similarly to an ridge regularizer on these parameters, allowing the model to potentially leverage these features rather than allowing them to obscure the class signal. This phenomenon is clearly visible in Figure~\ref{fig: Comparison_degraded}, where the model initially leverages the injected features to its advantage.
 
-The worst performer for this question was without a doubt
+As anticipated, the kNN model exhibited the sharpest decline in performance. As shown in Figure~\ref{fig:performance}, the mean values for both accuracy and F1-score drop after the introduction of just a single noisy dimension, and performance continues to monotonically degrade as more dimensions are added. Furthermore, the Bayesian comparison in Figure~\ref{fig: Comparison_degraded} reveals that the baseline model achieves a higher probability of superiority after only 5 additional dimensions. This confirms that kNN is highly sensitive to noise, likely because the irrelevant dimensions distort the distance metrics, thereby disrupting the local neighborhood structure and degrading classification accuracy.
+
+Logistic Regression also failed to benefit from the additional dimensions. Figure~\ref{fig:performance} shows that the model's accuracy and F1-score begin to decline after approximately 3 to 5 extra features are introduced. While it proves more resilient than kNN, its performance falls significantly short of RDA. This outcome was somewhat surprising, as Logistic Regression was expected to maintain stability due to its Ridge regularization; however, this penalty proved insufficient to counteract the noise. Figure~\ref{fig: Comparison_degraded} confirms that the model's performance becomes significantly worse after the introduction of roughly 15 to 20 extra features.
+
 \newpage
 \subsection{Conclusions}
-\newpage
+\begin{itemize}
+	\item The introduction of random features was sufficient to degrade the performance of several models.
+	\item RDA demonstrated the highest robustness, initially showing an improvement in accuracy before the trend dissipated and performance reverted toward its baseline as more features were added.
+	\item kNN suffered the most severe performance degradation, which aligns with expectations given the model's inherent sensitivity to noise.
+	\item The extent to which Logistic Regression was affected was unexpected. While Ridge regularization was anticipated to mitigate the impact of noise, it proved insufficient, suggesting that Lasso regularization might have been more effective at feature selection in this scenario.
+\end{itemize}
 \begin{figure}
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem2/performance.pdf}
 	\end{center}
-	\caption{}\label{fig:performance}
+	\caption{This figure shows the performance over extra features that was added to the inputs. You can see that the RDA model performance was not noticable compared to the other models. The kNN had the worst performance drop out of the models which was expectend because of the models sensitivity to noise.}\label{fig:performance}
 \end{figure}
 
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem2/bayes_comp.pdf}
 	\end{center}
-	\caption{}\label{fig: Comparison_degraded}
+	\caption{This figure shows the comparison with baysian analysis between the models original performance and the performance with added features. We can see that for the kNN and the LogReg the original model is performing better after a couple of added features, but RDA keeps it performance steady and even improves in the beginning.}\label{fig: Comparison_degraded}
 \end{figure}
 \newpage
 \section{Question 1(c)}
-The question here is to conclude if the dataset that is being used in this project contains any mislabels. To do this, a procentage of how sure every model was on its prediction was obtained. From Logistic Regression the softmax from each of it's 7 outputs was taken, for kNN it uses the number of neighbors in that class divided by the total number of neighbors and
+The question here is to conclude if the dataset that is being used in this project contains any mislabels. To do this, a procentage of how sure every model was on its prediction was obtained. From Logistic Regression the softmax from each of it's 7 outputs was taken, for kNN it uses the number of neighbors in that class divided by the total number of neighbors and RDA calculates its confidence by measuring how close a data point is to each class center, adjusted for the regularized shape of the cluster, combining that distance with the overall commonness of the class, and using a softmax function to turn those scores into a final percentage split.
+
+To create a method that can find mislabels in the data, a threshold of 5\% was set. If a model clasifies a data point, which does not agree with the data points label, and the probability of the model classifying this as the actuall label is lower than the threshold, then it will mark that point. If all the models mark the data point, then the the label will get classified as a mislabeled point. The false positive rate of this is calculated as following given that the models prediction is correct and that the models are independent of each other:
+\begin{equation}
+	P(\text{model mislabeling a point}) = (1 - (1-threshold)^{10})^3 \approx 40.13\%
+	\label{eq:}
+\end{equation}
+which makes all three models have a false positive at the same time as $(40.13\%)^3 = 6.5\%  $  which makes it of course possible but not a big part of the data set anyway.
+
+The result of this study can be found in table \ref{tab:mislabels_results}, were 75 mislabels were found and 195 of my 200 labels were correctly identified as wrong. This gives a false negative of about 2.5\% which is great. In table \ref{class_misslabels} you can see the differnt types of mislabelings. The most common mislabeling is the class 4 mislabeled as a 4, and the other mislabels is just one or two.
+
+
 \newpage
 
 \subsection{Conclusions}
+\begin{itemize}
+	\item The model that was created was abel, given that the prediction from the model is correct, with a calculated false positive of 6.5\% and a experimental value of false negative of 2.5\%.
+\end{itemize}
 \newpage
 
 \begin{table}[H]
@@ -194,7 +216,6 @@ The question here is to conclude if the dataset that is being used in this proje
 	\centering
 
 	\newpage
-	\label{tab:klassificeringsfel}
 	\begin{tabular}{llcl}
 		\toprule
 		\textbf{Labeled Class}   & \textbf{Probable Class} & \textbf{Number of times}   \\
@@ -213,7 +234,55 @@ The question here is to conclude if the dataset that is being used in this proje
 		\textbf{Total Mislabels} &                         & \textbf{75}              & \\
 		\bottomrule
 	\end{tabular}
-	\caption{This table summarizes the mislabelings that the models found and what the models thougt was the correct class. It's clear that the class with the most mislabelings were class 6 with a total of 57 mislabelings.}\label{class_problems}
+	\caption{This table summarizes the mislabelings that the models found and what the models thougt was the correct class. It's clear that the class with the most mislabelings were class 6 with a total of 57 mislabeling.\label{class_misslabels}}
 \end{table}
+\section{Question 1(d)}
+In this question the two best performing models prediction confidence were to be studied. This is firslty
+\newpage
+\subsection{Conclusions}
+\newpage
+
+\begin{table}[]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{AUC- mean} & \textbf{AUC - STD} \\ \hline
+		0.539              & 0.065              \\ \hline
+	\end{tabular}
+	\caption{Table over the AUC score that was obtained after training a random forest to distinguish between the training set and test set. This shows that the model can't distinguish between these sets which means that we can trust out predictions.}
+	\label{tab:rf-score}
+\end{table}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem3/model_conf_acc_7680.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem3/conf_diff_sample_size.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem3/class_balance_test.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem3/test_confidence.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+
+
+
+
+
 \end{document}
 
