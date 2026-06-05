@@ -6,6 +6,9 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amstext}
 \usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\usepackage{array}
 
 
 
@@ -40,21 +43,27 @@
 \begin{document}
 \maketitle
 \section{Question 1(a)}
-The dataset that was used in this text was B11. For the training set the data contained 7680 points that each had 820 input features and was labeled into 7 different classes. In table \ref{tab:classbalance_normal} the balance of the different labels can be found. The input values ranges from -12.725 to 14.072, with a mean around 0.419 and a standard deviation of 3.328.
-\\ \\
-To try to reduce the datasets dimensions, for noise reduction and lower model complexity, I began with a PCA (sklearn.decomposition.PCA), but this showed no real elbow for the variance but instead a curved shaped like $\frac{1}{x}$. But because PCA is unsupervised, this only shows that the all the features have a high variance over the dataset. To see which of these features that showed a correlation to the specific classes a supervised method was needed. Therefore I moved on to the F-statistics (sklearn.feature\_selection.r\_regression) which the results can be found in figure \ref{fig:ftest_data}. We can see a perfect elbow around the 20 feature mark and because of this dicovery these are the primary features that will be used in the rest of this project. Important to point out is that F-test is linear, so if some of these features have a unlinear correlattion to the class, this would not show up in the F-test. To ensure that no unlinar feature was filtererd out, I also looked at unlinar combinations (sklearn.feature\_selection.mutual\_info\_regression) but this gave me the same pixels as the linear approach did. Worth mentioning also was that all p-values for the picked features was well below 0.05 which was great news.
-\\ \\
-The models I picked for this project were Logistic Regression (built with pytorch), kNN (sklearn) and Regularized Discriminant Analysis (built in numpy). The Logistic Regression was picked because it's strictly linear approach by modeling the class boundaries depending on the input data. The Regularized Discriminant Analysis was picked for it's ability to adapt to different kinds of data sizes and because it models each class boundary by gaussian distributions. The kNN was picked becuase it's highly complex it's class boundarys and makes no assumtions about the distributions of the data. It's without a doubt three very different models.
-\\ \\
-The pipeline for the model evaluation is the same as used in project 3, where the inner kCV was ran 3 times, the outer kCV was ran 5 times and the whole pipeline was ran 10 times to see the variance of the performance. To hyperparameter optimize the models  bayesian optimisation (sci-kit optimize) was used where a total runs were done each outer kCV were the first 10 parameter test were to explore the performance of different hyperparameter combinations, and the last 10 focused to find the best combination.
-\\ \\
-The models where evaluated by accuracy and macro F1-score, where the macro F1-score means that each class had the same weight when calculating the score the score, regardles of how large the fraction of the given class had. To evaluate the models performance between each other Bayesian analysis was used, where the rope was set by running the
+
+
+The dataset used was B11, containing 7680 training points with 820 input features across 7 classes. Label distribution is shown in table \ref{tab:classbalance_normal}. Input values range from $-12.725$ to $14.072$, with a mean of $0.419$ and standard deviation of $3.328$.
+
+For dimensionality reduction, PCA was first applied but showed no clear elbow. Instead a $\frac{1}{x}$-shaped variance curve, indicating high variance across all features without class-specific information. Since PCA is unsupervised, F-statistics (sklearn.feature\_selection.r\_regression) were used instead to identify class-correlated features. A clear elbow appeared at around 20 features (figure \ref{fig:ftest_data}), which were adopted as the primary features for the remainder of the project. Since the F-test is linear, mutual information (\texttt{sklearn.feature\_selection.mutual\_info\_regression}) was also applied to catch any nonlinear correlations, but it identified the same features. All selected features had p-values well below $0.05$. To prevent adding features with 1 to 1 correlation, a correlation matrix were created (table \ref{table:correlation matrix}), were it's clear that no featuers have a correlation of 1 between each other.
+
+Three models were selected: Logistic Regression (PyTorch), kNN (sklearn), and Regularized Discriminant Analysis (NumPy). Logistic Regression provides a strictly linear decision boundary, RDA models each class with Gaussian distributions and adapts well to varying data sizes, and kNN makes no distributional assumptions while capturing highly complex boundarie, three contrasting approaches.
+
+Model evaluation followed the same nested cross-validation pipeline as project 3: the inner kCV ran 3 times, the outer 5 times, repeated 10 times to assess variance, were the kCV always used stratification to create folds. Hyperparameters were tuned using Bayesian optimisation (scikit-optimize), with 20 evaluations per outer fold were the 10 first had a focus on exploration and 10 last had a focus on performance. Models were evaluated on accuracy and macro F1-score, where each class contributes equally regardless of its size. This was done to have a score that showed if a model was down-prioritizing minority classes. Model comparison used Bayesian analysis, with the ROPE determined by running the pipeline on randomly labelled data and set such that the mean probability of equivalent performance exceeded $95\%$, and this was set to $4\%$.
+
+The results of the pipeline can be found in figure \ref{fig:performance_problem1}. We can see that the performance is around high 80\% to low 90\% for the 200 sample size, and goes rapidly up to around 95\% for 1000 sample sizes and from there slowly creeps upward from this. We also see that the variance of the scores are slowly reduces with the increase of sample size which is expected. Both scores is quite similar with the exception that f1-score is a bit lower for Logistic Regression and kNN in the beginning. This makes sense if we look at the class accuracy in figure \ref{fig:class_accuracy}. We can see that for 200 samples both escpecially kNN had a hard time classifying class 3 which makes sense as this is by far the smallest class in the dataset. If we look at the variance of the accuracy of class 3 we can also see that his is the largest for all the models when the sample size is small, which is expected. Looking at figure \ref{fig:bayesian_compare_problem1} we can see that in the beginning the Regularized Discriminant Analysis is the clear winner but around 1000 samples they all score within the rope. This is expected because of RDAs ability to adapt it self after small sample sizes.
 \newpage
 
 \subsection{Conclusions}
-Write your main findings here on 1/2 page.
 \begin{itemize}
-	\item Feel free to use bullet points.
+	\item The dataset is fairly balanced were most of the classes has appears around 15\% with the exception of class number 3 that only has 6.2\% of the labels.
+
+	\item The index of features that were relevant for the classification task where the following: 7, 37, 100,141, 158, 179, 210, 228, 276, 308, 410, 427, 519, 550, 558, 597, 752, 762, 796, 809. Checking the correlation matrix for these matrices confirmed that none of these features were exactly the same.
+	\item The models does a good job of classifying the dataset with accuracy and F1 scores around 90\% for most of the sample sizes. KNN and Logistic Regression does a bit worse on the smallest sample sizes compared to RDA but this expected because of RDAs ability to adapt with LDA and Native Bayes which is known to performe great on smaller sample sizes.
+	\item For smaller sample sizes the accuracy and performance for class 3 is noticable worse than for other classes which is expected. For larger sample sizes the hardest class instead becomes class 7 for all the models. This could be because of the class distribution in features.
+
 \end{itemize}
 
 \newpage
@@ -74,8 +83,44 @@ Write your main findings here on 1/2 page.
 	\begin{center}
 		\includegraphics[width=0.99\textwidth]{../figures/vis_data/show_elbow.pdf}
 	\end{center}
-	\caption{In this figure we see a F-Test filtering done on the dataset with a threshold of 10.0 was used to filter out features with a lower F-value. We can see that 21 features from the dataset passed this threshold. The blue bars shows the pixel values F-value, and the red bar shows the P-value for the specific F-value.}\label{fig:ftest_data}
+	\caption{In this figure we can see the F-Score plotted from highest to lowest. We can see a clear elbow after 20 features, and therefore these are the features we will use in the rest of the project.}\label{fig:ftest_data}
 \end{figure}
+
+\begin{table}[ht]
+	\centering
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{r|rrrrrrrrrrrrrrrrrrrr}
+			\toprule
+			             & \textbf{7} & \textbf{37} & \textbf{100} & \textbf{141} & \textbf{158} & \textbf{179} & \textbf{210} & \textbf{228} & \textbf{276} & \textbf{308} & \textbf{410} & \textbf{427} & \textbf{519} & \textbf{550} & \textbf{558} & \textbf{597} & \textbf{752} & \textbf{762} & \textbf{796} & \textbf{809} \\
+			\midrule
+			\textbf{7}   & 1.00       & 0.18        & 0.49         & 0.33         & -0.40        & 0.59         & -0.39        & 0.24         & -0.27        & 0.51         & -0.19        & -0.06        & -0.08        & 0.33         & -0.33        & -0.35        & 0.18         & 0.69         & -0.21        & -0.05        \\
+			\textbf{37}  & 0.18       & 1.00        & 0.06         & -0.12        & 0.41         & 0.19         & 0.23         & 0.32         & 0.54         & 0.37         & -0.50        & -0.35        & -0.30        & -0.19        & 0.48         & -0.18        & -0.27        & 0.18         & -0.08        & -0.21        \\
+			\textbf{100} & 0.49       & 0.06        & 1.00         & 0.16         & -0.37        & 0.51         & -0.52        & 0.24         & -0.15        & 0.54         & -0.39        & -0.10        & -0.16        & 0.51         & -0.30        & -0.47        & -0.05        & 0.60         & -0.18        & -0.19        \\
+			\textbf{141} & 0.33       & -0.12       & 0.16         & 1.00         & -0.39        & 0.41         & -0.24        & -0.01        & -0.31        & 0.31         & 0.19         & 0.23         & 0.24         & 0.31         & -0.28        & -0.13        & 0.28         & 0.46         & 0.24         & 0.03         \\
+			\textbf{158} & -0.40      & 0.41        & -0.37        & -0.39        & 1.00         & -0.30        & 0.50         & 0.07         & 0.72         & -0.18        & -0.28        & -0.31        & -0.15        & -0.37        & 0.69         & 0.17         & -0.46        & -0.45        & 0.17         & -0.22        \\
+			\textbf{179} & 0.59       & 0.19        & 0.51         & 0.41         & -0.30        & 1.00         & -0.40        & 0.23         & -0.07        & 0.56         & -0.37        & -0.14        & -0.04        & 0.31         & -0.21        & -0.50        & 0.10         & 0.69         & -0.03        & -0.20        \\
+			\textbf{210} & -0.39      & 0.23        & -0.52        & -0.24        & 0.50         & -0.40        & 1.00         & 0.02         & 0.36         & -0.20        & 0.16         & 0.07         & -0.06        & -0.40        & 0.51         & 0.41         & -0.22        & -0.45        & 0.01         & 0.13         \\
+			\textbf{228} & 0.24       & 0.32        & 0.24         & -0.01        & 0.07         & 0.23         & 0.02         & 1.00         & 0.23         & 0.47         & -0.34        & -0.22        & -0.24        & -0.06        & 0.14         & -0.17        & -0.18        & 0.24         & -0.14        & -0.03        \\
+			\textbf{276} & -0.27      & 0.54        & -0.15        & -0.31        & 0.72         & -0.07        & 0.36         & 0.23         & 1.00         & 0.12         & -0.53        & -0.38        & -0.27        & -0.36        & 0.69         & -0.05        & -0.51        & -0.21        & 0.13         & -0.31        \\
+			\textbf{308} & 0.51       & 0.37        & 0.54         & 0.31         & -0.18        & 0.56         & -0.20        & 0.47         & 0.12         & 1.00         & -0.45        & -0.16        & -0.26        & 0.19         & -0.05        & -0.44        & -0.10        & 0.67         & -0.18        & -0.11        \\
+			\textbf{410} & -0.19      & -0.50       & -0.39        & 0.19         & -0.28        & -0.37        & 0.16         & -0.34        & -0.53        & -0.45        & 1.00         & 0.52         & 0.35         & -0.01        & -0.25        & 0.52         & 0.37         & -0.32        & 0.07         & 0.46         \\
+			\textbf{427} & -0.06      & -0.35       & -0.10        & 0.23         & -0.31        & -0.14        & 0.07         & -0.22        & -0.38        & -0.16        & 0.52         & 1.00         & 0.29         & 0.18         & -0.27        & 0.29         & 0.30         & -0.10        & 0.17         & 0.38         \\
+			\textbf{519} & -0.08      & -0.30       & -0.16        & 0.24         & -0.15        & -0.04        & -0.06        & -0.24        & -0.27        & -0.26        & 0.35         & 0.29         & 1.00         & 0.19         & -0.14        & 0.16         & 0.22         & -0.09        & 0.26         & 0.06         \\
+			\textbf{550} & 0.33       & -0.19       & 0.51         & 0.31         & -0.37        & 0.31         & -0.40        & -0.06        & -0.36        & 0.19         & -0.01        & 0.18         & 0.19         & 1.00         & -0.38        & -0.23        & 0.14         & 0.37         & 0.08         & -0.16        \\
+			\textbf{558} & -0.33      & 0.48        & -0.30        & -0.28        & 0.69         & -0.21        & 0.51         & 0.14         & 0.69         & -0.05        & -0.25        & -0.27        & -0.14        & -0.38        & 1.00         & 0.15         & -0.41        & -0.34        & 0.11         & -0.16        \\
+			\textbf{597} & -0.35      & -0.18       & -0.47        & -0.13        & 0.17         & -0.50        & 0.41         & -0.17        & -0.05        & -0.44        & 0.52         & 0.29         & 0.16         & -0.23        & 0.15         & 1.00         & -0.04        & -0.54        & 0.04         & 0.34         \\
+			\textbf{752} & 0.18       & -0.27       & -0.05        & 0.28         & -0.46        & 0.10         & -0.22        & -0.18        & -0.51        & -0.10        & 0.37         & 0.30         & 0.22         & 0.14         & -0.41        & -0.04        & 1.00         & 0.19         & 0.02         & 0.23         \\
+			\textbf{762} & 0.69       & 0.18        & 0.60         & 0.46         & -0.45        & 0.69         & -0.45        & 0.24         & -0.21        & 0.67         & -0.32        & -0.10        & -0.09        & 0.37         & -0.34        & -0.54        & 0.19         & 1.00         & -0.22        & -0.14        \\
+			\textbf{796} & -0.21      & -0.08       & -0.18        & 0.24         & 0.17         & -0.03        & 0.01         & -0.14        & 0.13         & -0.18        & 0.07         & 0.17         & 0.26         & 0.08         & 0.11         & 0.04         & 0.02         & -0.22        & 1.00         & -0.10        \\
+			\textbf{809} & -0.05      & -0.21       & -0.19        & 0.03         & -0.22        & -0.20        & 0.13         & -0.03        & -0.31        & -0.11        & 0.46         & 0.38         & 0.06         & -0.16        & -0.16        & 0.34         & 0.23         & -0.14        & -0.10        & 1.00         \\
+			\bottomrule
+		\end{tabular}
+
+	\end{adjustbox}
+	\caption{A table over the correlation matrix for the 20 features that was picked out from the F-Test. No other correlation is close to 1.00 in this table which shows that all of these features are needed for the classificationt task.\label{table:correlation matrix}}
+
+
+\end{table}
 
 \begin{figure}[H]
 	\begin{center}
@@ -93,7 +138,7 @@ Write your main findings here on 1/2 page.
 	\begin{center}
 		\includegraphics[width=0.99\textwidth]{../figures/problem1/bayes_comp.pdf}
 	\end{center}
-	\caption{In this picture we can see the bayesian comparisons between the models, were the performance score used is F1-score. While RDA is performing the best in the beginning, the KNN and LogReg is fast to catch up around 1000 in sample size. The rope that was used for the comparison were $4\%$.}\label{fig:}
+	\caption{In this picture we can see the bayesian comparisons between the models, were the performance score used is F1-score. While RDA is performing the best in the beginning, the KNN and LogReg is fast to catch up around 1000 in sample size. The rope that was used for the comparison were $4\%$.}\label{fig:bayesian_compare_problem1}
 \end{figure}
 
 
@@ -105,7 +150,16 @@ Write your main findings here on 1/2 page.
 
 \newpage
 \section{Question 1(b)}
+For this question.
+\newpage
+\subsection{Conclusions}
+\newpage
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem2/bayes_comp.pdf}
+	\end{center}
+	\caption{}\label{fig: Comparison_degraded}
+\end{figure}
 
-Etc Etc
 \end{document}
 

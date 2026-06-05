@@ -160,20 +160,44 @@ def plot_performance(samples):
     fig.savefig(f"./figures/problem1/performance.pdf")
 
 
+def unpack_disrupted(original_model, disrupted) -> tuple[np.ndarray, np.ndarray]:
+    original_model = np.load("./models/" + original_model)
+    disrupted = [np.load("./models/" + d) for d in disrupted]
+    mean_scores_original = np.mean(original_model, axis=0)
+    std_scores_original = np.std(original_model, axis=0)
+    means = [mean_scores_original]
+    stds = [std_scores_original]
+
+    for score in disrupted:
+        means.append(np.mean(score, axis=0))
+        stds.append(np.std(score, axis=0))
+    means = np.array(means)
+    stds = np.array(stds)
+    return means, stds
+
+
 def plot_bayes_data_destruction(sizes):
     colors = ["#e74c3c", "#3498db", "#2ecc71"]
 
     ropes = [0.0056, 0.0107, 0.0062]
     names = ["KNN", "LogReg", "RDA"]
-    f1_knn = []
-    f1_log = []
-    f1_rda = []
-    f1_probs = [f1_knn, f1_log, f1_rda]
+
+    score_knn = []
+    score_log = []
+    score_rda = []
+    score_models = [score_knn, score_log, score_rda]
+
+    comp_prob_knn = []
+    comp_prob_log = []
+    comp_prob_rda = []
+
+    f1_probs = [comp_prob_knn, comp_prob_log, comp_prob_rda]
 
     for idx, name in enumerate(names):
         original_model = f"1a/{name}_7680.npy"
         disrupted_models = [f"1b/{name}_{size}.npy" for size in sizes]
 
+        score_models[idx] = unpack_disrupted(original_model, disrupted_models)
         f1_left, f1_rope, f1_right = get_p_defect(
             original_model, disrupted_models, "f1-score", 10, rope=ropes[idx]
         )
@@ -217,13 +241,32 @@ def plot_bayes_data_destruction(sizes):
 
         ax[i].set_ylim(0, 1.15)
         ax[i].set_ylabel("Probability")
-        ax[i].set_ylabel("Extra features")
+        ax[i].set_xlabel("Extra features")
         ax[i].set_title(names[i], fontsize=14)
         ax[i].legend()
         ax[i].grid(axis="y", linestyle="--", alpha=0.7)
 
     fig.tight_layout()
     fig.savefig("./figures/problem2/bayes_comp.pdf")
+    sizes = [0, 1, 3, 5, 15, 20, 40]
+    x = np.arange(len(sizes))
+
+    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+    for idx, ax in enumerate(axs):
+        for model_idx, name in enumerate(names):
+            mean, std = score_models[model_idx]
+            ax.errorbar(x, mean[:, idx], yerr=std[:, idx], label=name)
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(sizes)
+        ax.set_ylabel("Probability")
+        ax.set_xlabel("Extra features")
+        ax.legend()
+    axs[0].set_title("Accuracy")
+    axs[1].set_title("F1-Score")
+
+    fig.tight_layout()
+    fig.savefig("./figures/problem2/performance.pdf")
 
 
 def plot_bayes_analysis(samples):
@@ -370,9 +413,9 @@ def main():
     # plot_performance_2a()
 
     # get_rope_size("f1-score", 10)
-    plot_bayes_analysis(samples)
-    plot_class_accuracy(samples)
-    # plot_bayes_data_destruction(sizes)
+    # plot_bayes_analysis(samples)
+    # plot_class_accuracy(samples)
+    plot_bayes_data_destruction(sizes)
 
 
 if __name__ == "__main__":
