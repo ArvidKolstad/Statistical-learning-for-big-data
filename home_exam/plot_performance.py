@@ -364,7 +364,7 @@ def plot_class_accuracy(samples):
 def main():
     # samples = ["extreme"]
     samples = [200, 500, 1000, 3000, 5000, 7680]
-    sizes = [1, 3, 5, 15, 20, 40, 60]
+    sizes = [1, 3, 5, 15, 20, 40]
 
     plot_performance(samples)
     # plot_performance_2a()

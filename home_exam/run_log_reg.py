@@ -14,11 +14,11 @@ def main():
         "in_features": 20,
         "number_of_classes": 7,
     }
-    # sizes = [1, 3, 5, 15, 20, 40]
+    sizes = [1, 3, 5, 15, 20, 40]
 
-    samples = [200, 500, 1000, 3000, 5000, 7680]
-    # sample = 7680
-    for sample in samples:
+    # samples = [200, 500, 1000, 3000, 5000, 7680]
+    sample = 7680
+    for size in sizes:
         train_inputs = np.load(f"./data/{sample}_input.npy")
         train_labels = np.load(f"./data/{sample}_labels.npy")
 
@@ -31,13 +31,13 @@ def main():
             model_params,
             train_config,
         )
-        model_adapter = LogRegAdapter(model_config, f"./models/1a/LogReg_{sample}")
+        model_adapter = LogRegAdapter(model_config, f"./models/1b/LogReg_{size}")
 
         train_data = [train_inputs, train_labels]
         # kCV_outer(model_adapter, train_data, multiple_runs=0)
 
-        run_pipeline(model_adapter, train_data)
-    # run_defect_pipeline(model_adapter, train_data, size)
+        # run_pipeline(model_adapter, train_data)
+        run_defect_pipeline(model_adapter, train_data, size)
 
 
 if __name__ == "__main__":
