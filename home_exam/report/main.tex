@@ -40,8 +40,15 @@
 \begin{document}
 \maketitle
 \section{Question 1(a)}
-The dataset that was used in this text was B11.
-
+The dataset that was used in this text was B11. For the training set the data contained 7680 points that each had 820 input features and was labeled into 7 different classes. In table \ref{tab:classbalance_normal} the balance of the different labels can be found. The input values ranges from -12.725 to 14.072, with a mean around 0.419 and a standard deviation of 3.328.
+\\ \\
+To try to reduce the datasets dimensions, for noise reduction and lower model complexity, I began with a PCA (sklearn.decomposition.PCA), but this showed no real elbow for the variance but instead a curved shaped like $\frac{1}{x}$. But because PCA is unsupervised, this only shows that the all the features have a high variance over the dataset. To see which of these features that showed a correlation to the specific classes a supervised method was needed. Therefore I moved on to the F-statistics (sklearn.feature\_selection.r\_regression) which the results can be found in figure \ref{fig:ftest_data}. We can see a perfect elbow around the 20 feature mark and because of this dicovery these are the primary features that will be used in the rest of this project. Important to point out is that F-test is linear, so if some of these features have a unlinear correlattion to the class, this would not show up in the F-test. To ensure that no unlinar feature was filtererd out, I also looked at unlinar combinations (sklearn.feature\_selection.mutual\_info\_regression) but this gave me the same pixels as the linear approach did. Worth mentioning also was that all p-values for the picked features was well below 0.05 which was great news.
+\\ \\
+The models I picked for this project were Logistic Regression (built with pytorch), kNN (sklearn) and Regularized Discriminant Analysis (built in numpy). The Logistic Regression was picked because it's strictly linear approach by modeling the class boundaries depending on the input data. The Regularized Discriminant Analysis was picked for it's ability to adapt to different kinds of data sizes and because it models each class boundary by gaussian distributions. The kNN was picked becuase it's highly complex it's class boundarys and makes no assumtions about the distributions of the data. It's without a doubt three very different models.
+\\ \\
+The pipeline for the model evaluation is the same as used in project 3, where the inner kCV was ran 3 times, the outer kCV was ran 5 times and the whole pipeline was ran 10 times to see the variance of the performance. To hyperparameter optimize the models  bayesian optimisation (sci-kit optimize) was used where a total runs were done each outer kCV were the first 10 parameter test were to explore the performance of different hyperparameter combinations, and the last 10 focused to find the best combination.
+\\ \\
+The models where evaluated by accuracy and macro F1-score, where the macro F1-score means that each class had the same weight when calculating the score the score, regardles of how large the fraction of the given class had. To evaluate the models performance between each other Bayesian analysis was used, where the rope was set by running the
 \newpage
 
 \subsection{Conclusions}
@@ -51,13 +58,6 @@ Write your main findings here on 1/2 page.
 \end{itemize}
 
 \newpage
-\begin{figure}[H]
-	\begin{center}
-		\includegraphics[width=0.99\textwidth]{../figures/vis_data/f_test.pdf}
-	\end{center}
-	\caption{In this figure we see a F-Test filtering done on the dataset with a threshold of 10.0 was used to filter out features with a lower F-value. We can see that 21 features from the dataset passed this threshold. The blue bars shows the pixel values F-value, and the red bar shows the P-value for the specific F-value.}\label{fig:ftest_data}
-\end{figure}
-
 \begin{table}[H]
 	\begin{center}
 		\begin{tabular}{|c|c|c|c|c|c|c|c|}
@@ -69,23 +69,31 @@ Write your main findings here on 1/2 page.
 		\label{tab:classbalance_normal}
 	\end{center}
 \end{table}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.99\textwidth]{../figures/vis_data/show_elbow.pdf}
+	\end{center}
+	\caption{In this figure we see a F-Test filtering done on the dataset with a threshold of 10.0 was used to filter out features with a lower F-value. We can see that 21 features from the dataset passed this threshold. The blue bars shows the pixel values F-value, and the red bar shows the P-value for the specific F-value.}\label{fig:ftest_data}
+\end{figure}
+
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.99\textwidth]{../figures/problem1/performance.pdf}
 	\end{center}
-	\caption{In this figure the performance over }\label{fig:performance_problem1}
+	\caption{In this figure presents the performance for the diffetent models after running the pipeline over different sample sizes. The left plot displays the accuracy score and the right plot shos the F1-score. We can see that Logistic Regression is performing the worst, and the KNN and RDA is almost similar in their performance over different sample sizes.}\label{fig:performance_problem1}
 \end{figure}
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.99\textwidth]{../figures/problem1/class_accuracy.pdf}
 	\end{center}
-	\caption{}\label{fig:class_accuracy}
+	\caption{In this figure we can see each models accuuracy per class. While performing the worst for smaller sample sizes, escpecially for class 3, the accuracy is quite similar for higher sample sizes. }\label{fig:class_accuracy}
 \end{figure}
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.99\textwidth]{../figures/problem1/bayes_comp.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{In this picture we can see the bayesian comparisons between the models, were the performance score used is F1-score. While RDA is performing the best in the beginning, the KNN and LogReg is fast to catch up around 1000 in sample size. The rope that was used for the comparison were $4\%$.}\label{fig:}
 \end{figure}
 
 

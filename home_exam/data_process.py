@@ -97,7 +97,7 @@ def visualize_dataset():
     saved_features_index = []
 
     for idx, f_val in enumerate(f_statistics):
-        if f_val >= 10:
+        if f_val >= 5:
             saved_features_index.append(idx)
     print(f"saved_features: {len(saved_features_index)}")
 
@@ -416,14 +416,75 @@ def get_extreme_data():
     fig.savefig("./figures/problem4/class_balance_extreme.pdf")
 
 
+def plot_elbow():
+    X = pd.read_csv("./data/X_TR.csv")
+    y = pd.read_csv("./data/y_TR.csv")
+
+    # .values.ravel() flattens y to 1D (e.g., shape from (N, 1) to (N,))
+    f_scores, p_values = f_regression(X, y.values.ravel())
+
+    df_scores = pd.DataFrame(
+        {"Feature": X.columns, "F_Score": f_scores, "P_Value": p_values}
+    )
+
+    df_scores = df_scores.sort_values(by="F_Score", ascending=False).reset_index(
+        drop=True
+    )
+
+    # Print summary (Tip: for 820 features, you might want to look at just the top 20 in the console)
+    print("\n--- TOP 20 FEATURE RANKING SUMMARY ---")
+    print(
+        df_scores.head(20).to_string(
+            index=False,
+            formatters={"F_Score": "{:.2f}".format, "P_Value": "{:.4e}".format},
+        )
+    )
+
+    plt.figure(figsize=(12, 6))
+
+    plt.plot(
+        df_scores.index,
+        df_scores["F_Score"],
+        color="#3498db",
+        linewidth=2.5,
+        label="Feature F-Scores",
+    )
+
+    plt.fill_between(df_scores.index, df_scores["F_Score"], color="#3498db", alpha=0.1)
+
+    plt.ylabel("F-Score Value (Higher = Stronger)", fontsize=11, fontweight="bold")
+    plt.xlabel(
+        f"Features Ranked by Importance (Total: {len(df_scores)})",
+        fontsize=11,
+        fontweight="bold",
+    )
+    plt.title(
+        "f_regression Elbow Method for High-Dimensional Data",
+        fontsize=13,
+        fontweight="bold",
+        pad=15,
+    )
+    plt.vlines(20, 0, 2500, color="red", label="20 samples")
+
+    plt.xlim(0, len(df_scores))
+    plt.yscale("log")
+    plt.grid(True, linestyle=":", alpha=0.6)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig("./figures/vis_data/show_elbow.pdf")
+    plt.close()  # Good practice to close figures when saving to file
+
+
 def main():
-    visualize_dataset()
-    get_data_different_sample_sizes()
-    plot_covar_matrix()
-    get_random_labels()
-    plot_variance_between_classes()
-    get_processed_test()
-    get_extreme_data()
+    # visualize_dataset()
+    plot_elbow()
+    # get_data_different_sample_sizes()
+    # plot_covar_matrix()
+    # get_random_labels()
+    # plot_variance_between_classes()
+    # get_processed_test()
+    # get_extreme_data()
 
 
 if __name__ == "__main__":
