@@ -48,8 +48,7 @@ def main():
     splits = 10
     # for sample in samples:
     model_adapter = KNNModelAdapter(
-        model_config,
-        f"./models/1d/KNN_{sample}",
+        model_config, f"./models/1d/KNN_{sample}", save_configs=True
     )
     train_inputs = np.load(f"./data/{sample}_input.npy")
     train_labels = np.load(f"./data/{sample}_labels.npy")

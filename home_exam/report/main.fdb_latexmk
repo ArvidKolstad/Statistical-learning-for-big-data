@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1780683258.03174 "main.tex" "main.pdf" "main" 1780683258.58949 0
+["pdflatex"] 1780684023.31277 "main.tex" "main.pdf" "main" 1780684023.90223 0
   "../figures/problem1/bayes_comp.pdf" 1780670686.41406 17816 2c74b545fde120b7bcf06564fdfd8b91 ""
   "../figures/problem1/class_accuracy.pdf" 1780670686.87507 23239 a65e1d7631df844113da541d225cb525 ""
   "../figures/problem1/performance.pdf" 1780683256.92156 13962 9cc57cb2cd34fbfc5176d55be9494518 ""
@@ -125,9 +125,9 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1757582839 5528033 2de1857e87beaf98978b63b6132a9b29 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1757582939 3605800 db2d2d5241c583d393506a8a45cfd127 ""
   "/usr/local/texlive/2025/texmf.cnf" 1757582833.95572 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1780683258.52655 5978 8bc02f851c90aa1b332f05d7194c7efc "pdflatex"
-  "main.out" 1780683258.52803 687 417753f7f6fb4291ed2ee2948af829f8 "pdflatex"
-  "main.tex" 1780683079.89063 19390 d16bdebbdc0d3a87574ba9960c04df89 ""
+  "main.aux" 1780684023.84211 5978 8bc02f851c90aa1b332f05d7194c7efc "pdflatex"
+  "main.out" 1780684023.84327 687 417753f7f6fb4291ed2ee2948af829f8 "pdflatex"
+  "main.tex" 1780684021.39404 19740 a19784da563e39c34d807dcc51da7185 ""
   (generated)
   "main.aux"
   "main.log"

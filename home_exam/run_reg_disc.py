@@ -35,7 +35,9 @@ def main():
 
     # for size in sizes:
 
-    model_adapter = RDAModelAdapter(model_config, f"./models/1d/RDA_{sample}")
+    model_adapter = RDAModelAdapter(
+        model_config, f"./models/1d/RDA_{sample}", save_configs=True
+    )
     train_inputs = np.load(f"./data/{sample}_input.npy")
     train_labels = np.load(f"./data/{sample}_labels.npy")
     test_data = np.load(f"./data/test_set.npy")
@@ -44,7 +46,11 @@ def main():
     # run_pipeline(model_adapter, train_data)
     # run_defect_pipeline(model_adapter, train_data, size)
 
-    kCV_outer(model_adapter, train_data, multiple_runs=0)
+    kCV_outer(
+        model_adapter,
+        train_data,
+        multiple_runs=0,
+    )
     with open(model_adapter.output_dir + "config.pickle", "rb") as f:
         model_adapter.config.hyperparameters = pkl.load(f)
 

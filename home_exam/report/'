@@ -173,9 +173,8 @@ The worst performer for this question was without a doubt
 \end{figure}
 \newpage
 \section{Question 1(c)}
-The question here is to conclude if the dataset that is being used in this project contains any mislabels. To do this, a procentage of how sure every model was on its prediction was obtained. From Logistic Regression the softmax from each of it's 7 outputs was taken, for kNN it uses the number of neighbors in that class divided by the total number of neighbors and
+My best performing models in Question 1 was determined to be kNN and RDA.
 \newpage
-
 \subsection{Conclusions}
 \newpage
 
