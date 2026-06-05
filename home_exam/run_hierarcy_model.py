@@ -21,7 +21,7 @@ def main():
     ]
 
     model_params = {
-        "in_features": 19,
+        "in_features": 20,
         "classes_minority": [0, 1, 2, 3, 4, 5],
         "lmbda": 0.19788427205107756,
         "gamma": 0.0026512062937177343,

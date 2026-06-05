@@ -55,7 +55,7 @@ def main():
     test_data = np.load(f"./data/test_set.npy")
 
     train_data = [train_inputs, train_labels]
-    run_pipeline(model_adapter, train_data)
+    #run_pipeline(model_adapter, train_data)
     # run_defect_pipeline(model_adapter, train_data, size)
 
     kCV_outer(model_adapter, train_data, multiple_runs=0)
