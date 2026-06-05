@@ -51,7 +51,7 @@ For dimensionality reduction, PCA was first applied but showed no clear elbow. I
 
 Three models were selected: Logistic Regression (PyTorch), kNN (sklearn), and Regularized Discriminant Analysis (NumPy). Logistic Regression provides a strictly linear decision boundary, RDA models each class with Gaussian distributions and adapts well to varying data sizes, and kNN makes no distributional assumptions while capturing highly complex boundarie, three contrasting approaches.
 
-Model evaluation followed the same nested cross-validation pipeline as project 3: the inner kCV ran 3 times, the outer 5 times, repeated 10 times to assess variance, were the kCV always used stratification to create folds. Hyperparameters were tuned using Bayesian optimisation (scikit-optimize), with 20 evaluations per outer fold were the 10 first had a focus on exploration and 10 last had a focus on performance. Models were evaluated on accuracy and macro F1-score, where each class contributes equally regardless of its size. This was done to have a score that showed if a model was down-prioritizing minority classes. Model comparison used Bayesian analysis, with the ROPE determined by running the pipeline on randomly labelled data and set such that the mean probability of equivalent performance exceeded $95\%$, and this was set to $4\%$.
+Model evaluation followed the same nested cross-validation pipeline as project 3: the inner kCV ran 3 times, the outer 5 times, repeated 10 times to assess variance, were the kCV always used stratification to create folds. Hyperparameters were tuned using Bayesian optimisation (scikit-optimize), with 20 evaluations per outer fold were the 10 first had a focus on exploration and 10 last had a focus on performance. Models were evaluated on accuracy and macro F1-score, where each class contributes equally regardless of its size. This was done to have a score that showed if a model was down-prioritizing minority classes. Model comparison used Bayesian analysis (Baycomp), with the ROPE determined by running the pipeline on randomly labelled data and set such that the mean probability of equivalent performance exceeded $95\%$, and this was set to $4\%$.
 
 The results of the pipeline can be found in figure \ref{fig:performance_problem1}. We can see that the performance is around high 80\% to low 90\% for the 200 sample size, and goes rapidly up to around 95\% for 1000 sample sizes and from there slowly creeps upward from this. We also see that the variance of the scores are slowly reduces with the increase of sample size which is expected. Both scores is quite similar with the exception that f1-score is a bit lower for Logistic Regression and kNN in the beginning. This makes sense if we look at the class accuracy in figure \ref{fig:class_accuracy}. We can see that for 200 samples both escpecially kNN had a hard time classifying class 3 which makes sense as this is by far the smallest class in the dataset. If we look at the variance of the accuracy of class 3 we can also see that his is the largest for all the models when the sample size is small, which is expected. Looking at figure \ref{fig:bayesian_compare_problem1} we can see that in the beginning the Regularized Discriminant Analysis is the clear winner but around 1000 samples they all score within the rope. This is expected because of RDAs ability to adapt it self after small sample sizes.
 \newpage
@@ -150,16 +150,69 @@ The results of the pipeline can be found in figure \ref{fig:performance_problem1
 
 \newpage
 \section{Question 1(b)}
-For this question.
+For this question a disruption to the dataset would be inserted to get the models to perform worse. Therefore I choose to insert a number of randomly choosen feature from the original 820 features to study how the models would react to this noise. I used the pipeline described in Question 1(a) to measure the performance of this and for every re-run of the pipelin I used new features so that the models so a fair picture of the problem could be presented. For all the runs I choose to use all the 7600 samples for the pipeline to get the most accurat performance decrease. To evaluate this we will look at the performance for all the models and then compare the F1-Score with Bayesian Analysis. The rope for this analysis was taken as the standard deviation of the original model.
+
+In figure \ref{fig:performance} the performance of the models can be seen over the increasing number of features used to train and classify the labels. It's clear that the RDA is robust against these features and for the first couple of features the models performance increases in both accuracy and F1-Score. This is expected because of how the model can adapt to these noisy dimensions by change its hyperparameters to get closer to the LDA and native bayes which works like a l2 regularized for these parameters which could lead to these features help, instead of cluttering the signal for the class. In figure \ref{fig: Comparison_degraded} exactly this behavior were the model even takes advantage of the new features in the beginning.
+
+The worst performer for this question was without a doubt
 \newpage
 \subsection{Conclusions}
 \newpage
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem2/performance.pdf}
+	\end{center}
+	\caption{}\label{fig:performance}
+\end{figure}
+
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem2/bayes_comp.pdf}
 	\end{center}
 	\caption{}\label{fig: Comparison_degraded}
 \end{figure}
+\newpage
+\section{Question 1(c)}
+for this question
+\newpage
+\subsection{Conclusions}
+\newpage
 
+\begin{table}[H]
+	\centering
+
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{\begin{tabular}[c]{@{}c@{}}Mislabels\\ Original\end{tabular}} & \textbf{\begin{tabular}[c]{@{}c@{}}Mislabels\\ Faked\end{tabular}} \\ \hline
+		75                                                                    & 195/200                                                            \\ \hline
+	\end{tabular}
+	\caption{Table over the mislabels found from the original data and the mislabels that the models caught that was introduced by me.}
+	\label{tab:mislabels_results}
+\end{table}
+\begin{table}[H]
+	\centering
+
+	\newpage
+	\label{tab:klassificeringsfel}
+	\begin{tabular}{llcl}
+		\toprule
+		\textbf{Labeled Class}   & \textbf{Probable Class} & \textbf{Number of times}   \\
+		\midrule
+		6                        & 4                       & 57                         \\
+		2                        & 3                       & 4                          \\
+		4                        & 2                       & 3                          \\
+		4                        & 6                       & 2                          \\
+		3                        & 2                       & 2                          \\
+		1                        & 3                       & 2                          \\
+		2                        & 5                       & 2                          \\
+		4                        & 0                       & 1                          \\
+		3                        & 1                       & 1                          \\
+		3                        & 5                       & 1                          \\
+		\midrule
+		\textbf{Total Mislabels} &                         & \textbf{75}              & \\
+		\bottomrule
+	\end{tabular}
+	\caption{This table summarizes the mislabelings that the models found and what the models thougt was the correct class. It's clear that the class with the most mislabelings were class 6 with a total of 57 mislabelings.}\label{class_problems}
+\end{table}
 \end{document}
 

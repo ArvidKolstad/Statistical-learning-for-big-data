@@ -45,25 +45,25 @@ def main():
 
     samples = [200, 500, 1000, 3000, 5000, 7680]
 
-        # splits = 10
-    for sample in samples:
-        model_adapter = KNNModelAdapter(
+    splits = 10
+    # for sample in samples:
+    model_adapter = KNNModelAdapter(
         model_config,
-            f"./models/1a/KNN_{sample}",
-        )
-        train_inputs = np.load(f"./data/{sample}_input.npy")
-        train_labels = np.load(f"./data/{sample}_labels.npy")
-        test_data = np.load(f"./data/test_set.npy")
+        f"./models/1d/KNN_{sample}",
+    )
+    train_inputs = np.load(f"./data/{sample}_input.npy")
+    train_labels = np.load(f"./data/{sample}_labels.npy")
+    test_data = np.load(f"./data/test_set.npy")
 
-        train_data = [train_inputs, train_labels]
-        run_pipeline(model_adapter, train_data)
-        #run_defect_pipeline(model_adapter, train_data, size)
+    train_data = [train_inputs, train_labels]
+    run_pipeline(model_adapter, train_data)
+    # run_defect_pipeline(model_adapter, train_data, size)
 
-    # kCV_outer(model_adapter, train_data, multiple_runs=0)
-    # with open(model_adapter.output_dir + "config.pickle", "rb") as f:
-    # model_adapter.config.hyperparameters = pkl.load(f)
+    kCV_outer(model_adapter, train_data, multiple_runs=0)
+    with open(model_adapter.output_dir + "config.pickle", "rb") as f:
+        model_adapter.config.hyperparameters = pkl.load(f)
 
-    # get_model_probability_performance(model_adapter, train_data, splits)
+    get_model_probability_performance(model_adapter, train_data, splits)
     # predict_testset(model_adapter, train_data, test_data)
 
 
