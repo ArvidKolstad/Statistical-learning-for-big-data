@@ -26,10 +26,10 @@ def main():
         model_params,
         train_config,
     )
-    # sizes = [1, 3, 5, 15, 20, 40, 60]
+    # sizes = [1, 3, 5, 15, 20, 40]
 
     samples = [200, 500, 1000, 3000, 5000, 7680]
-    #sample = 7680
+    # sample = 7680
 
     # splits = 10
 

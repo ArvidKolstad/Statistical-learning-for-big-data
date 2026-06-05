@@ -11,30 +11,30 @@ def main():
         Real(0, 0.01, name="l2"),
     ]
     model_params = {
-        "in_features": 19,
+        "in_features": 20,
         "number_of_classes": 7,
     }
-    # sizes = [1, 3, 5, 15, 20, 40, 60]
+    # sizes = [1, 3, 5, 15, 20, 40]
 
     samples = [200, 500, 1000, 3000, 5000, 7680]
     # sample = 7680
     for sample in samples:
-        train_inputs = np.load(f"./data/extreme_inputs.npy")
-        train_labels = np.load(f"./data/extreme_labels.npy")
+        train_inputs = np.load(f"./data/{sample}_input.npy")
+        train_labels = np.load(f"./data/{sample}_labels.npy")
 
         imbalance = torch.tensor(get_data_balance(train_labels)).float()
 
         train_config = TorchTrainConfig(hyper_params, class_imbalance=imbalance)
         model_config = ModelConfig(
-        "Logistic Regression",
-        LogisticRegression,
-        model_params,
-        train_config,
+            "Logistic Regression",
+            LogisticRegression,
+            model_params,
+            train_config,
         )
-        model_adapter = LogRegAdapter(model_config, f"./models/2a/LogReg_extreme")
+        model_adapter = LogRegAdapter(model_config, f"./models/1a/LogReg_{sample}")
 
         train_data = [train_inputs, train_labels]
-    # kCV_outer(model_adapter, train_data, multiple_runs=0)
+        # kCV_outer(model_adapter, train_data, multiple_runs=0)
 
         run_pipeline(model_adapter, train_data)
     # run_defect_pipeline(model_adapter, train_data, size)

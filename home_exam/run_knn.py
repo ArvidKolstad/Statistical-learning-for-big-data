@@ -22,7 +22,7 @@ def main():
     train_config = BaseTrainConfig(hyper_params)
 
     model_params = {
-        "in_features": 19,
+        "in_features": 20,
         "n_neighbors": np.int64(10),
         "weights": np.str_("distance"),
         "algorithm": "auto",
@@ -38,24 +38,24 @@ def main():
         model_params,
         train_config,
     )
-    sizes = [1, 3, 5, 15, 20, 40, 60]
+    sizes = [1, 3, 5, 15, 20, 40]
 
     # for size in sizes:
-    # samples = [200, 500, 1000, 3000, 5000, 7680]
-    sample = 7680
+    samples = [200, 500, 1000, 3000, 5000, 7680]
+    # sample = 7680
 
     # splits = 10
-    # for size in sizes:
-    model_adapter = KNNModelAdapter(
-        model_config,
-        f"./models/2a/KNN_extreme",
-    )
-    train_inputs = np.load(f"./data/extreme_inputs.npy")
-    train_labels = np.load(f"./data/extreme_labels.npy")
-    test_data = np.load(f"./data/test_set.npy")
+    for sample in samples:
+        model_adapter = KNNModelAdapter(
+            model_config,
+            f"./models/1a/KNN_sample",
+        )
+        train_inputs = np.load(f"./data/{sample}_input.npy")
+        train_labels = np.load(f"./data/{sample}_labels.npy")
+        test_data = np.load(f"./data/test_set.npy")
 
-    train_data = [train_inputs, train_labels]
-    run_pipeline(model_adapter, train_data)
+        train_data = [train_inputs, train_labels]
+        run_pipeline(model_adapter, train_data)
     # run_defect_pipeline(model_adapter, train_data, size)
 
     # kCV_outer(model_adapter, train_data, multiple_runs=0)
