@@ -44,7 +44,7 @@ def main():
         Real(0, 0.01, name="l2"),
     ]
     model_params_logreg = {
-        "in_features": 19,
+        "in_features": 20,
         "number_of_classes": 7,
     }
 
@@ -70,7 +70,7 @@ def main():
     train_config_knn = BaseTrainConfig(hyper_params_knn)
 
     model_settings_knn = {
-        "in_features": 19,
+        "in_features": 20,
         "n_neighbors": 5,
         "weights": "uniform",
         "algorithm": "auto",
@@ -97,7 +97,7 @@ def main():
         Real(0, 1, name="gamma"),
     ]
     model_params_rda = {
-        "in_features": 19,
+        "in_features": 20,
         "classes": [0, 1, 2, 3, 4, 5, 6],
         "lmbda": 0.5,
         "gamma": 0.5,
@@ -137,6 +137,7 @@ def main():
     common_mislabeled_df = df_rda[is_in_logreg & is_in_knn]
     common_mislabeled_df = common_mislabeled_df.drop(columns=["match_key"])
     print(f"Mislabels: {common_mislabeled_df.shape[0]}")
+    common_mislabeled_df.to_csv("./figures/problem3/mislabeled.csv")
 
     df_rda = pd.DataFrame(wrong_data_rda)
     df_logreg = pd.DataFrame(wrong_data_logreg)
