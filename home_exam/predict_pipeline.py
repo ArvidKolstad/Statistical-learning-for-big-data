@@ -281,9 +281,9 @@ def plot_class_balance_test():
 
 
 def main():
-    # plot_confidence_acc()
-    # plot_confidence_over_sample_diff()
-    # plot_confidence_for_test()
+    plot_confidence_acc()
+    plot_confidence_over_sample_diff()
+    plot_confidence_for_test()
     plot_class_balance_test()
 
 
