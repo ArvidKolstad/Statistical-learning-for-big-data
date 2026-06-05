@@ -28,6 +28,7 @@ def predict_testset(
         class_prob_stats[cls, 1] = np.std(np.max(class_preds, axis=1))
     np.save(model_adapter.output_dir + "stats", class_prob_stats)
     np.save(model_adapter.output_dir + "mean", mean_prob)
+    np.save(model_adapter.output_dir + "preded_class", pred_classes)
 
 
 def get_confidence_accuracy(model_confidence, model_preds, model_labels):
@@ -259,10 +260,31 @@ def plot_confidence_for_test():
     fig.savefig("./figures/problem3/test_confidence.pdf", bbox_inches="tight")
 
 
+def plot_class_balance_test():
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    rda = np.load("./models/1d/RDA_7680preded_class.npy")
+    knn = np.load("./models/1d/KNN_7680preded_class.npy")
+    names = ["KNN", "RDA"]
+    unique_labels = np.unique(rda)
+    class_dist = np.zeros((2, 7))
+    model_data = [knn, rda]
+    for model_idx, data in enumerate(model_data):
+        for class_idx, cls in enumerate(unique_labels):
+            class_dist[model_idx, class_idx] = np.sum(data == cls) / data.shape[0]
+
+        class_labels = "1", "2", "3", "4", "5", "6", "7"
+        ax[model_idx].pie(class_dist[model_idx], labels=class_labels, autopct="%1.1f%%")
+        ax[model_idx].set_title(names[model_idx])
+    fig.suptitle("Class balances for 7680 training samples")
+    fig.tight_layout()
+    fig.savefig("./figures/problem3/class_balance_test.pdf")
+
+
 def main():
     # plot_confidence_acc()
     # plot_confidence_over_sample_diff()
-    plot_confidence_for_test()
+    # plot_confidence_for_test()
+    plot_class_balance_test()
 
 
 if __name__ == "__main__":

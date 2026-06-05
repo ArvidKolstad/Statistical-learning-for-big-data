@@ -17,6 +17,7 @@ def main():
         "classes": [0, 1, 2, 3, 4, 5, 6],
         "lmbda": 0.19788427205107756,
         "gamma": 0.0026512062937177343,
+        "weights": "macro",
     }
     train_config = RDATrainConfig(hyper_params)
     model_config = ModelConfig(
@@ -25,31 +26,30 @@ def main():
         model_params,
         train_config,
     )
-    # sizes = [1, 3]
+    # sizes = [1, 3, 5, 15, 20, 40, 60]
 
-    samples = [200, 500, 1000, 3000, 5000, 7680]
+    # samples = [200, 500, 1000, 3000, 5000, 7680]
+    sample = 7680
 
-    splits = 10
+    # splits = 10
 
-    for sample in samples:
+    # for size in sizes:
 
-        model_adapter = RDAModelAdapter(
-            model_config, f"./models/1d/RDA_{sample}", save_configs=True
-        )
-        train_inputs = np.load(f"./data/{sample}_input.npy")
-        train_labels = np.load(f"./data/{sample}_labels.npy")
-        test_data = np.load(f"./data/test_set.npy")
-        train_data = [train_inputs, train_labels]
+    model_adapter = RDAModelAdapter(model_config, f"./models/2a/RDA_extreme")
+    train_inputs = np.load(f"./data/extreme_inputs.npy")
+    train_labels = np.load(f"./data/extreme_labels.npy")
+    # test_data = np.load(f"./data/test_set.npy")
+    train_data = [train_inputs, train_labels]
 
-        # run_pipeline(model_adapter, train_data)
-        # run_defect_pipeline(model_adapter, train_data, size)
+    run_pipeline(model_adapter, train_data)
+    # run_defect_pipeline(model_adapter, train_data, size)
 
-        # kCV_outer(model_adapter, train_data, multiple_runs=0)
-        with open(model_adapter.output_dir + "config.pickle", "rb") as f:
-            model_adapter.config.hyperparameters = pkl.load(f)
+    # kCV_outer(model_adapter, train_data, multiple_runs=0)
+    # with open(model_adapter.output_dir + "config.pickle", "rb") as f:
+    # model_adapter.config.hyperparameters = pkl.load(f)
 
-        # get_model_probability_performance(model_adapter, train_data, splits)
-        predict_testset(model_adapter, train_data, test_data)
+    # get_model_probability_performance(model_adapter, train_data, splits)
+    # predict_testset(model_adapter, train_data, test_data)
 
 
 if __name__ == "__main__":

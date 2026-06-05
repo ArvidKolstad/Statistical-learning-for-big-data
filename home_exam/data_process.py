@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
-from sklearn.feature_selection import f_regression
+from sklearn.feature_selection import f_regression, mutual_info_regression
 from torch.utils.data import Dataset
 
 
@@ -33,6 +33,7 @@ def get_processed_test():
         228,
         276,
         308,
+        410,
         427,
         519,
         550,
@@ -100,7 +101,7 @@ def visualize_dataset():
             saved_features_index.append(idx)
     print(f"saved_features: {len(saved_features_index)}")
 
-    fig, ax1 = plt.subplots(figsize=(14, 5))
+    fig, ax1 = plt.subplots(figsize=(11, 5))
 
     x = np.arange(len(saved_features_index))
     width = 0.30
@@ -124,8 +125,8 @@ def visualize_dataset():
         alpha=0.8,
         label="P-value",
     )
-    ax1.bar_label(bars1, fmt="%.1f", padding=3, fontsize=7, color="steelblue")
-    ax2.bar_label(bars2, fmt="%.2e", padding=3, fontsize=7, color="tomato")
+    ax1.bar_label(bars1, fmt="%.1f", padding=3, fontsize=10, color="steelblue")
+    ax2.bar_label(bars2, fmt="%.2e", padding=3, fontsize=10, color="tomato")
 
     ax1.set_xlabel("Feature index")
     ax1.set_ylabel("F-value", color="steelblue")
@@ -135,7 +136,7 @@ def visualize_dataset():
     ax2.set_yscale("log")
 
     ax1.set_xticks(x)
-    ax1.set_xticklabels(saved_features_index, rotation=45, ha="right", fontsize=8)
+    ax1.set_xticklabels(saved_features_index, rotation=45, ha="right", fontsize=10)
 
     lines = [bars1, bars2]
     labels = ["F-value", "P-value"]
@@ -158,6 +159,7 @@ def get_data_different_sample_sizes():
         228,
         276,
         308,
+        410,
         427,
         519,
         550,
@@ -222,6 +224,7 @@ def plot_variance_between_classes():
         228,
         276,
         308,
+        410,
         427,
         519,
         550,
@@ -244,6 +247,7 @@ def plot_variance_between_classes():
         "228",
         "276",
         "308",
+        "410",
         "427",
         "519",
         "550",
@@ -299,6 +303,7 @@ def plot_covar_matrix():
         "228",
         "276",
         "308",
+        "410",
         "427",
         "519",
         "550",
@@ -336,13 +341,89 @@ def get_data_balance(labels):
     return np.array(balance)
 
 
+def get_extreme_data():
+    df_inputs = pd.read_csv("./data/X_TR.csv")
+    df_labels = pd.read_csv("./data/y_TR.csv")
+    df_labels = df_labels - 1
+    index = [
+        7,
+        37,
+        100,
+        141,
+        158,
+        179,
+        210,
+        228,
+        276,
+        308,
+        410,
+        427,
+        519,
+        550,
+        558,
+        597,
+        752,
+        762,
+        796,
+        809,
+    ]
+    df_inputs = df_inputs.iloc[:, index]
+
+    df = pd.concat([df_inputs, df_labels], axis=1)
+
+    df_extreme = df[df["class"] == 0]
+    len_majority = len(df_extreme)
+
+    numb_instances_of_small_cls = 20
+    len_minority = numb_instances_of_small_cls * 6
+
+    classes_to_under_sample = [1, 2, 3, 4, 5, 6]
+
+    for cls in classes_to_under_sample:
+        df_class = df[df["class"] == cls].sample(n=numb_instances_of_small_cls)
+        df_extreme = pd.concat([df_extreme, df_class], axis=0)
+    df_extra_label = pd.DataFrame(
+        {"extra_class": np.concat([np.zeros(len_majority), np.ones(len_minority)])}
+    ).reset_index(drop=True)
+    df_extreme = df_extreme.reset_index(drop=True)
+
+    df_extreme = pd.concat([df_extreme, df_extra_label], axis=1)
+
+    df_extreme = df_extreme.sample(frac=1).reset_index(drop=True)
+
+    extreme_labels = df_extreme["class"]
+    extra_labels = df_extreme["extra_class"]
+    extreme_inputs = df_extreme.drop(columns=["class", "extra_class"]).to_numpy()
+
+    np.save("./data/extreme_inputs", extreme_inputs)
+    np.save("./data/extreme_labels", extreme_labels)
+    np.save("./data/extreme_labels_extra", extra_labels)
+
+    unique_labels = np.unique(extreme_labels)
+    print(unique_labels)
+
+    class_dist = np.zeros(7)
+
+    fig, ax = plt.subplots()
+    for class_idx, cls in enumerate(unique_labels):
+        class_dist[class_idx] = np.sum(extreme_labels == cls) / extreme_labels.shape[0]
+
+    class_labels = "1", "2", "3", "4", "5", "6", "7"
+    ax.pie(class_dist, labels=class_labels, autopct="%1.1f%%")
+    ax.set_title("Class Balance")
+
+    fig.tight_layout()
+    fig.savefig("./figures/problem4/class_balance_extreme.pdf")
+
+
 def main():
-    # visualize_dataset()
-    # get_data_different_sample_sizes()
-    # plot_covar_matrix()
-    # get_random_labels()
-    # plot_variance_between_classes()
+    visualize_dataset()
+    get_data_different_sample_sizes()
+    plot_covar_matrix()
+    get_random_labels()
+    plot_variance_between_classes()
     get_processed_test()
+    get_extreme_data()
 
 
 if __name__ == "__main__":

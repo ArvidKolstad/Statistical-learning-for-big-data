@@ -51,6 +51,7 @@ class RegularizedDiscriminantAnalysis:
         classes: list,
         lmbda: float,
         gamma: float,
+        weights="freq",
         load_params=None,
     ) -> None:
         self.in_features = in_features
@@ -59,6 +60,7 @@ class RegularizedDiscriminantAnalysis:
 
         self.lmbda = lmbda
         self.gamma = gamma
+        self.weights = weights
 
         self.mean_vector = np.zeros((self.number_of_classes, in_features))
         self.covariance_matrices = np.zeros(
@@ -159,7 +161,10 @@ class RegularizedDiscriminantAnalysis:
 
         total_samples = np.sum(n_samples)
 
-        self.pi = n_samples / total_samples
+        if self.weights == "freq":
+            self.pi = n_samples / total_samples
+        elif self.weights == "macro":
+            self.pi = np.ones(self.number_of_classes) / self.number_of_classes
 
         self.mean_vector = sum_x / n_samples[:, None]
 
