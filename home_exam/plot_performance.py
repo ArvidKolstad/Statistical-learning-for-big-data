@@ -75,21 +75,52 @@ def get_p_defect(normal_path, defect_paths, performance_score, runs, rope=0.01):
 
 
 def load_data(paths):
-    names = ["KNN", "LogReg", "RDA"]
+    names = ["KNN", "LogReg", "RDA", "Hierarchy"]
     array_dict = {}
     for name, path in zip(names, paths):
         array_dict[name] = np.load("models/" + path)
     return array_dict
 
 
+def plot_performance_2a():
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+
+    names = ["KNN", "LogReg", "RDA", "Hierarchy"]
+    models = [
+        f"2a/KNN_extreme.npy",
+        f"2a/LogReg_extreme.npy",
+        f"2a/RDA_extreme.npy",
+        f"2a/HierarchyModel.npy",
+    ]
+    data = load_data(models)
+
+    acc_data = [data[name][:, 0] for name in names]
+    f1_data = [data[name][:, 1] for name in names]
+
+    ax[0].boxplot(acc_data, tick_labels=names)
+    ax[0].set_ylabel("Accuracy")
+    ax[0].set_title("Accuracy Distribution")
+    ax[0].set_ylim(0.65, 1)
+    ax[0].grid(axis="y", linestyle="--", alpha=0.7)
+
+    ax[1].boxplot(f1_data, tick_labels=names)
+    ax[1].set_ylabel("F1-Score")
+    ax[1].set_title("F1-Score Distribution")
+    ax[1].set_ylim(0.65, 1)
+    ax[1].grid(axis="y", linestyle="--", alpha=0.7)
+
+    fig.tight_layout()
+    fig.savefig("./figures/problem4/performance_boxplot.pdf")
+
+
 def plot_performance(samples):
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
 
-    acc_means = np.zeros((6, 3))
-    acc_std = np.zeros((6, 3))
+    acc_means = np.zeros((len(samples), 3))
+    acc_std = np.zeros((len(samples), 3))
 
-    f1_means = np.zeros((6, 3))
-    f1_std = np.zeros((6, 3))
+    f1_means = np.zeros((len(samples), 3))
+    f1_std = np.zeros((len(samples), 3))
 
     names = ["KNN", "LogReg", "RDA"]
 
@@ -140,7 +171,7 @@ def plot_bayes_data_destruction(sizes):
     f1_probs = [f1_knn, f1_log, f1_rda]
 
     for idx, name in enumerate(names):
-        original_model = "1a/{name_7680.npy}"
+        original_model = f"1a/{name}_7680.npy"
         disrupted_models = [f"1b/{name}_{size}.npy" for size in sizes]
 
         f1_left, f1_rope, f1_right = get_p_defect(
@@ -156,8 +187,11 @@ def plot_bayes_data_destruction(sizes):
 
     fig, ax = plt.subplots(1, 3, figsize=(23, 6))
 
-    names = ["KNN", "KNN", "LogReg"]
-    attributes = ["P(Left > Right)", "P(Left = Right)", "P(Left < Right)"]
+    attributes = [
+        "P(Original > Disrupted)",
+        "P(Original = Disrupted)",
+        "P(Original < Disrupted)",
+    ]
 
     x = np.arange(len(sizes))
     width = 0.25
@@ -183,12 +217,13 @@ def plot_bayes_data_destruction(sizes):
 
         ax[i].set_ylim(0, 1.15)
         ax[i].set_ylabel("Probability")
+        ax[i].set_ylabel("Extra features")
         ax[i].set_title(names[i], fontsize=14)
         ax[i].legend()
         ax[i].grid(axis="y", linestyle="--", alpha=0.7)
 
     fig.tight_layout()
-    fig.savefig("./figures/problem1/bayes_comp.pdf")
+    fig.savefig("./figures/problem2/bayes_comp.pdf")
 
 
 def plot_bayes_analysis(samples):
@@ -196,15 +231,26 @@ def plot_bayes_analysis(samples):
 
     f1_knn_log = []
     f1_knn_rda = []
+    f1_knn_hier = []
     f1_log_rda = []
+    f1_log_hier = []
+    f1_rda_hier = []
 
-    f1_scores = [f1_knn_log, f1_knn_rda, f1_log_rda]
+    f1_scores = [
+        f1_knn_log,
+        f1_knn_rda,
+        f1_knn_hier,
+        f1_log_rda,
+        f1_log_hier,
+        f1_rda_hier,
+    ]
 
     for sample in samples:
         models = [
-            f"KNN_{sample}.npy",
-            f"LogReg_{sample}.npy",
-            f"RDA_{sample}.npy",
+            f"2a/KNN_{sample}.npy",
+            f"2a/LogReg_{sample}.npy",
+            f"2a/RDA_{sample}.npy",
+            f"2a/HierarchyModel.npy",
         ]
 
         f1_models = get_p_scores_compare(models, "f1-score", 10, rope=0.040)
@@ -217,15 +263,22 @@ def plot_bayes_analysis(samples):
             }
             f1_scores[idx].append(f1_stacks)
 
-    fig, ax = plt.subplots(1, 3, figsize=(23, 6))
+    fig, ax = plt.subplots(1, 6, figsize=(23, 6))
 
-    names = ["KNN vs LogReg", "KNN vs RDA", "LogReg vs RDA"]
+    names = [
+        "KNN vs LogReg",
+        "KNN vs RDA",
+        "KNN vs Hierarchy",
+        "LogReg vs RDA",
+        "LogReg vs Hierarchy",
+        "RDA vs Hierarchy",
+    ]
     attributes = ["P(Left > Right)", "P(Left = Right)", "P(Left < Right)"]
 
     x = np.arange(len(samples))
     width = 0.25
 
-    for i in range(3):
+    for i in range(6):
         for attr_idx, attribute in enumerate(attributes):
             measurements = [f1_scores[i][j][attribute] for j in range(len(samples))]
 
@@ -251,33 +304,32 @@ def plot_bayes_analysis(samples):
         ax[i].grid(axis="y", linestyle="--", alpha=0.7)
 
     fig.tight_layout()
-    fig.savefig("./figures/problem1/bayes_comp.pdf")
+    fig.savefig("./figures/problem4/bayes_comp.pdf")
 
 
 def plot_class_accuracy(samples):
-    names = ["KNN", "LogReg", "RDA"]
+    names = ["KNN", "LogReg", "RDA", "Hierarchy"]
     samples_label = [f"{sample}" for sample in samples]
     classes = ["1", "2", "3", "4", "5", "6", "7"]
 
-    statistics = np.zeros((3, 2, len(samples), 7))
+    statistics = np.zeros((4, 2, len(samples), 7))
 
     for j, sample in enumerate(samples):
         models = [
-            f"KNN_{sample}_fold_acc.npy",
-            f"LogReg_{sample}_fold_acc.npy",
-            f"RDA_{sample}_fold_acc.npy",
+            f"2a/KNN_{sample}_fold_acc.npy",
+            f"2a/LogReg_{sample}_fold_acc.npy",
+            f"2a/RDA_{sample}_fold_acc.npy",
+            f"2a/HierarchyModel_fold_acc.npy",
         ]
         data_dict = load_data(models)
         for i, name in enumerate(names):
             statistics[i, 0, j, :] = np.mean(data_dict[name], axis=0)
-            statistics[i, 1, j, :] = np.var(data_dict[name], axis=0)
+            statistics[i, 1, j, :] = np.std(data_dict[name], axis=0)
 
-    statistics[:, 1, :, :] = np.sqrt(statistics[:, 1, :, :])
-
-    fig, ax = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+    fig, ax = plt.subplots(1, 4, figsize=(18, 6), sharey=True)
 
     num_classes = len(classes)
-    total_width = 0.8  # Total space allocated for all bars per sample group
+    total_width = 0.8
     width = total_width / num_classes
     x = np.arange(len(samples))
 
@@ -306,16 +358,21 @@ def plot_class_accuracy(samples):
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.05), ncol=7)
 
     fig.tight_layout()
-    fig.savefig("./figures/problem1/class_accuracy.pdf", bbox_inches="tight")
+    fig.savefig("./figures/problem4/class_accuracy.pdf", bbox_inches="tight")
 
 
 def main():
-    samples = [200, 500, 1000, 3000, 5000, 7680]
-    plot_performance(samples)
-    # plot_bayes_analysis(model, samples)
+    samples = ["extreme"]
+    # samples = [200, 500, 1000, 3000, 5000, 7680]
+    sizes = [1, 3, 5, 15, 20, 40, 60]
+
+    # plot_performance(samples)
+    plot_performance_2a()
+
     # get_rope_size("f1-score", 10)
-    # plot_bayes_analysis(samples)
-    # plot_class_accuracy(samples)
+    plot_bayes_analysis(samples)
+    plot_class_accuracy(samples)
+    # plot_bayes_data_destruction(sizes)
 
 
 if __name__ == "__main__":

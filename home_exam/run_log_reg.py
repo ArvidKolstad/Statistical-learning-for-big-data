@@ -1,6 +1,6 @@
 import numpy as np
 from log_reg import LogRegAdapter, TorchTrainConfig, LogisticRegression
-from train_pipeline import run_pipeline, ModelConfig, run_defect_pipeline
+from train_pipeline import run_pipeline, ModelConfig, run_defect_pipeline, kCV_outer
 from skopt.space import Integer, Real, Categorical
 from data_process import get_data_balance
 import torch
@@ -14,30 +14,30 @@ def main():
         "in_features": 19,
         "number_of_classes": 7,
     }
-    sizes = [5, 15, 20, 40, 60]
+    # sizes = [1, 3, 5, 15, 20, 40, 60]
 
-    for size in sizes:
+    samples = [200, 500, 1000, 3000, 5000, 7680]
+    # sample = 7680
+    # for sample in samples:
+    train_inputs = np.load(f"./data/extreme_inputs.npy")
+    train_labels = np.load(f"./data/extreme_labels.npy")
 
-        sample = 7680
+    imbalance = torch.tensor(get_data_balance(train_labels)).float()
 
-        train_inputs = np.load(f"./data/{sample}_input.npy")
-        train_labels = np.load(f"./data/{sample}_labels.npy")
+    train_config = TorchTrainConfig(hyper_params, class_imbalance=imbalance)
+    model_config = ModelConfig(
+        "Logistic Regression",
+        LogisticRegression,
+        model_params,
+        train_config,
+    )
+    model_adapter = LogRegAdapter(model_config, f"./models/2a/LogReg_extreme")
 
-        imbalance = torch.tensor(get_data_balance(train_labels)).float()
+    train_data = [train_inputs, train_labels]
+    # kCV_outer(model_adapter, train_data, multiple_runs=0)
 
-        train_config = TorchTrainConfig(hyper_params, class_imbalance=imbalance)
-        model_config = ModelConfig(
-            "Logistic Regression",
-            LogisticRegression,
-            model_params,
-            train_config,
-        )
-        model_adapter = LogRegAdapter(model_config, f"./models/1b/LogReg_{size}")
-
-        train_data = [train_inputs, train_labels]
-
-        # run_pipeline(model_adapter, train_data)
-        run_defect_pipeline(model_adapter, train_data, size)
+    run_pipeline(model_adapter, train_data)
+    # run_defect_pipeline(model_adapter, train_data, size)
 
 
 if __name__ == "__main__":
