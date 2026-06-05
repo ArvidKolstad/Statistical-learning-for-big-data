@@ -196,6 +196,12 @@ INPUT ../figures/vis_data/f_test.pdf
 INPUT ../figures/vis_data/f_test.pdf
 INPUT ../figures/vis_data/f_test.pdf
 INPUT ../figures/vis_data/f_test.pdf
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmmi10.tfm
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmsy10.tfm
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
 INPUT ../figures/problem1/performance.pdf
 INPUT ../figures/problem1/performance.pdf
 INPUT ../figures/problem1/performance.pdf
@@ -214,7 +220,9 @@ INPUT ../figures/problem1/bayes_comp.pdf
 INPUT main.aux
 INPUT ./main.out
 INPUT ./main.out
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
+INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb
