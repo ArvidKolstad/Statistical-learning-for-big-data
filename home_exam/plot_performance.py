@@ -209,7 +209,7 @@ def plot_bayes_data_destruction(sizes):
             }
             f1_probs[idx].append(f1_stacks)
 
-    fig, ax = plt.subplots(1, 3, figsize=(23, 6))
+    fig, ax = plt.subplots(1, 3, figsize=(12, 5))
 
     attributes = [
         "P(Original > Disrupted)",
@@ -251,7 +251,7 @@ def plot_bayes_data_destruction(sizes):
     sizes = [0, 1, 3, 5, 15, 20, 40]
     x = np.arange(len(sizes))
 
-    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
     for idx, ax in enumerate(axs):
         for model_idx, name in enumerate(names):
             mean, std = score_models[model_idx]
