@@ -48,7 +48,7 @@ def main():
         # for sample in samples:
         model_adapter = KNNModelAdapter(
             model_config,
-            f"./models/1a/KNN_sample",
+            f"./models/1a/KNN_{sample}",
         )
         train_inputs = np.load(f"./data/{sample}_input.npy")
         train_labels = np.load(f"./data/{sample}_labels.npy")
