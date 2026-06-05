@@ -236,13 +236,29 @@ The result of this study can be found in table \ref{tab:mislabels_results}, were
 	\end{tabular}
 	\caption{This table summarizes the mislabelings that the models found and what the models thougt was the correct class. It's clear that the class with the most mislabelings were class 6 with a total of 57 mislabeling.\label{class_misslabels}}
 \end{table}
+\newpage
 \section{Question 1(d)}
-In this question the two best performing models prediction confidence were to be studied. This is firslty
+In this question the two best performing models prediction confidence were to be studied. The first thing to do is to investigate how similar the training data and the test data is. This was done by training a random forest. Random forest is choosen because it's easy to see directly, by looking at the feature importance, what features that differes between the data sets. So what was done was putting 0-labels on the training data and 1-labels on the test data to see the model can classify after training. So by running the model in the pipeline used in Question 1(a) to determine to see the performance of the model. What we will focus on is the ROC-AUC score. This is a score that tells us how well the model understand a binary classifcation task, were a score of 0.5 tells you that the model is just guessing randomly and a score of 1.0 is a perfect model have a 100\% accuracy in it's predictions. In the table \ref{tab:rf-score} we see that the mean of the AUC-score is 0.539 with a standard devation of 0.065. This tells us that the model is just guessing and that te test data is very similar to the training data. This means that if our predictions are good on the training data, we should be able to trust these on the test data too.
+
+To meassure how good a model is to know its prediction accuracy we use the Expected Calibration Error which is defined as the following:
+\begin{equation}
+	\text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
+\end{equation}
+where $N$ is the total number of samples, $B_m$ represents the set of indices of samples whose prediction confidence falls into the $m$-th interval, $|B_m|$ is the number of samples in bin $B_m$, $\text{acc}(B_m)$ is the true accuracy of the predictions in bin $B_m$, and $\text{conf}(B_m)$ is the average confidence of the predictions in bin $B_m$. In figure \ref{fig:expectedcalibration} we can see this value ploted for kNN and RDA over different sample sizes. We see that the error is clearly going down with an increasing sample size and both the kNN and the RDA is well below 3\% mark which is good. We can also see that in figure \ref{fig:ModelConfidenceAccuracy} how well they score across different confidence ranges. What we can see for 7680 samples is that the RDA is almost perfect in it's guessing and that almost all of it's confidence is in 0.9 to 1.0 range. This is good for this kind of score for the ECE. The kNN is not as good as the kNN but still does not score too bad either. This is probably an effect of the data distribtution is fitting the RDA model very good for this classification. All this means that we should be able to trust our predictions in for the testdata.
+
+In figure \ref{fig:classdist} we can see that the balances for the different classes are almost the same except the classes 3 and 6. Class 3 is also the minority class in our training data. This is kind almost expected because if we look at figure \ref{fig:confclass} we see that the kNN is not that confidente with its classifications of class 3. This means that if we can trust the confidence of out models, the more correct class distributions should be the one of RDA because of the uncertanty in the kNNs classifications. Why de classifications confidence is so low for class 3 for the kNN is probably because of it's low concentration in the training data which makes makes it a harder class for kNNs classification strategy.
+
 \newpage
 \subsection{Conclusions}
+\begin{itemize}
+	\item The difference between the training set and the test set is small, because of the inability to classify them.
+	\item The Expected Calibration Error decreases with sample size and for larger sample sizes reaches as low as 2-3\% for the kNN and RDA.
+	\item These two findings together makes it so we should be able to trust our classifications for the test sets.
+	\item The models classifies the class balance almost the same with a smaller difference between class 3 and 6. This is explained by class 3 being a minority class and the low confidence in classifications from the kNN.
+\end{itemize}
 \newpage
 
-\begin{table}[]
+\begin{table}[H]
 	\centering
 	\begin{tabular}{|c|c|}
 		\hline
@@ -253,32 +269,62 @@ In this question the two best performing models prediction confidence were to be
 	\label{tab:rf-score}
 \end{table}
 
-\begin{figure}
-	\begin{center}
-		\includegraphics[width=0.95\textwidth]{../figures/problem3/model_conf_acc_7680.pdf}
-	\end{center}
-	\caption{}\label{fig:}
-\end{figure}
 
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem3/conf_diff_sample_size.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{In this plot we can see the Expected Calibration Error ploted over the sample size. We can see that the accuracy increases with sample sizes but that RDA is slightly better when having enough training data.}\label{fig:expectedcalibration}
+\end{figure}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem3/model_conf_acc_7680.pdf}
+	\end{center}
+	\caption{In this figure the blue bars shows the models own confidence in its predictions against the real accuracy of those predictions. We can also see the frequency of the models confidence in the red bars. For kNN we see that the highest frequency is the confidence 0.9-1.0 which is good. But it also has a lot of guesses lower than this. On the other hand RDA is almost always certaion of its classifications and when it isn't it has a good accuracy of it's guesse and has a almost perfect prediction.}\label{fig:ModelConfidenceAccuracy}
 \end{figure}
 
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem3/class_balance_test.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{Here are the models classifications balance for the two classes. The biggest differance between the clasifications is class 3 and class 6. Otherwise are the fractions almost the same.}\label{fig:classdist}
 \end{figure}
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.95\textwidth]{../figures/problem3/test_confidence.pdf}
 	\end{center}
+	\caption{Here we see the classification confidence for each class over different sample sizes of training. We see that class 3 is lowest for the kNN which could explain the difference that was seen in the class balance predictions.}\label{fig:confclass}
+\end{figure}
+\newpage
+\section{Question 2(a) and 2(b)}
+\newpage
+\subsection{Conclusions}
+\newpage
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem4/class_balance_extreme.pdf}
+	\end{center}
 	\caption{}\label{fig:}
 \end{figure}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem4/performance_boxplot.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{../figures/problem4/bayes_comp.pdf}
+	\end{center}
+	\caption{}\label{fig:}
+\end{figure}
+
+
+
+
 
 
 

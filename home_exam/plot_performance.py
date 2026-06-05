@@ -75,7 +75,7 @@ def get_p_defect(normal_path, defect_paths, performance_score, runs, rope=0.01):
 
 
 def load_data(paths):
-    names = ["KNN", "LogReg", "RDA"]
+    names = ["KNN", "LogReg", "RDA", "Hierarchy"]
     array_dict = {}
     for name, path in zip(names, paths):
         array_dict[name] = np.load("models/" + path)
@@ -157,7 +157,7 @@ def plot_performance(samples):
     ax[1].legend()
 
     fig.tight_layout()
-    fig.savefig(f"./figures/problem1/performance.pdf")
+    fig.savefig(f"./figures/problem4/performance.pdf")
 
 
 def unpack_disrupted(original_model, disrupted) -> tuple[np.ndarray, np.ndarray]:
@@ -282,18 +282,18 @@ def plot_bayes_analysis(samples):
     f1_scores = [
         f1_knn_log,
         f1_knn_rda,
-        # f1_knn_hier,
+        f1_knn_hier,
         f1_log_rda,
-        # f1_log_hier,
-        # f1_rda_hier,
+        f1_log_hier,
+        f1_rda_hier,
     ]
 
     for sample in samples:
         models = [
-            f"1a/KNN_{sample}.npy",
-            f"1a/LogReg_{sample}.npy",
-            f"1a/RDA_{sample}.npy",
-            # f"2a/HierarchyModel.npy",
+            f"2a/KNN_{sample}.npy",
+            f"2a/LogReg_{sample}.npy",
+            f"2a/RDA_{sample}.npy",
+            f"2a/HierarchyModel.npy",
         ]
 
         f1_models = get_p_scores_compare(models, "f1-score", 10, rope=0.040)
@@ -309,10 +309,10 @@ def plot_bayes_analysis(samples):
     names = [
         "KNN vs LogReg",
         "KNN vs RDA",
-        # "KNN vs Hierarchy",
+        "KNN vs Hierarchy",
         "LogReg vs RDA",
-        # "LogReg vs Hierarchy",
-        # "RDA vs Hierarchy",
+        "LogReg vs Hierarchy",
+        "RDA vs Hierarchy",
     ]
     fig, ax = plt.subplots(1, len(names), figsize=(11, 4))
 
@@ -347,11 +347,11 @@ def plot_bayes_analysis(samples):
         ax[i].grid(axis="y", linestyle="--", alpha=0.7)
 
     fig.tight_layout()
-    fig.savefig("./figures/problem1/bayes_comp.pdf")
+    fig.savefig("./figures/problem4/bayes_comp.pdf")
 
 
 def plot_class_accuracy(samples):
-    names = ["KNN", "LogReg", "RDA"]
+    names = ["KNN", "LogReg", "RDA", "Hierarchy"]
     samples_label = [f"{sample}" for sample in samples]
     classes = ["1", "2", "3", "4", "5", "6", "7"]
 
@@ -359,10 +359,10 @@ def plot_class_accuracy(samples):
 
     for j, sample in enumerate(samples):
         models = [
-            f"1a/KNN_{sample}_fold_acc.npy",
-            f"1a/LogReg_{sample}_fold_acc.npy",
-            f"1a/RDA_{sample}_fold_acc.npy",
-            # f"2a/HierarchyModel_fold_acc.npy",
+            f"2a/KNN_{sample}_fold_acc.npy",
+            f"2a/LogReg_{sample}_fold_acc.npy",
+            f"2a/RDA_{sample}_fold_acc.npy",
+            f"2a/HierarchyModel_fold_acc.npy",
         ]
         data_dict = load_data(models)
         for i, name in enumerate(names):
@@ -401,21 +401,21 @@ def plot_class_accuracy(samples):
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.05), ncol=7)
 
     fig.tight_layout()
-    fig.savefig("./figures/problem1/class_accuracy.pdf", bbox_inches="tight")
+    fig.savefig("./figures/problem4/class_accuracy.pdf", bbox_inches="tight")
 
 
 def main():
-    # samples = ["extreme"]
-    samples = [200, 500, 1000, 3000, 5000, 7680]
+    samples = ["extreme"]
+    # samples = [200, 500, 1000, 3000, 5000, 7680]
     sizes = [1, 3, 5, 15, 20, 40]
 
-    plot_performance(samples)
-    # plot_performance_2a()
+    # plot_performance(samples)
+    plot_performance_2a()
 
     # get_rope_size("f1-score", 10)
-    # plot_bayes_analysis(samples)
-    # plot_class_accuracy(samples)
-    plot_bayes_data_destruction(sizes)
+    plot_bayes_analysis(samples)
+    plot_class_accuracy(samples)
+    # plot_bayes_data_destruction(sizes)
 
 
 if __name__ == "__main__":

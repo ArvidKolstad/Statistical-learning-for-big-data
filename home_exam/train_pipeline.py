@@ -16,8 +16,8 @@ class BaseTrainConfig:
         default_factory=lambda: [6, 7, 42, 10, 57, 67, 69, 103, 43, 37]
     )
     R: int = 10
-    K: int = 10
-    L: int = 10
+    K: int = 5
+    L: int = 3
 
 
 T_Config = TypeVar("T_Config", bound=BaseTrainConfig)
