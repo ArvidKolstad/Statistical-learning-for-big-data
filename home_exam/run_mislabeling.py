@@ -127,9 +127,9 @@ def main():
     df_logreg = pd.DataFrame(mislabeled_logreg)
     df_knn = pd.DataFrame(mislabeled_knn)
 
-    df_rda["match_key"] = df_rda["input_value"].apply(to_tuple_key)
-    df_logreg["match_key"] = df_logreg["input_value"].apply(to_tuple_key)
-    df_knn["match_key"] = df_knn["input_value"].apply(to_tuple_key)
+    df_rda["match_key"] = df_rda["input value"].apply(to_tuple_key)
+    df_logreg["match_key"] = df_logreg["input value"].apply(to_tuple_key)
+    df_knn["match_key"] = df_knn["input value"].apply(to_tuple_key)
 
     is_in_logreg = df_rda["match_key"].isin(df_logreg["match_key"])
     is_in_knn = df_rda["match_key"].isin(df_knn["match_key"])
@@ -142,9 +142,9 @@ def main():
     df_logreg = pd.DataFrame(wrong_data_logreg)
     df_knn = pd.DataFrame(wrong_data_knn)
 
-    df_rda["match_key"] = df_rda["input_value"].apply(to_tuple_key)
-    df_logreg["match_key"] = df_logreg["input_value"].apply(to_tuple_key)
-    df_knn["match_key"] = df_knn["input_value"].apply(to_tuple_key)
+    df_rda["match_key"] = df_rda["input value"].apply(to_tuple_key)
+    df_logreg["match_key"] = df_logreg["input value"].apply(to_tuple_key)
+    df_knn["match_key"] = df_knn["input value"].apply(to_tuple_key)
 
     is_in_logreg = df_rda["match_key"].isin(df_logreg["match_key"])
     is_in_knn = df_rda["match_key"].isin(df_knn["match_key"])

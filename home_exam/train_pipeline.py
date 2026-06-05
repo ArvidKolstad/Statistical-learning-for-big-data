@@ -112,9 +112,10 @@ def hyper_parameter_opt(
         model_adapter.config.hyperparameters[hyper_param] = value
 
 
-def check_mislabel(model_adapter, val_input, val_labels, threshold=0.05) -> list[dict]:
+def check_mislabel(model_adapter, val_batch, threshold=0.05) -> list[dict]:
+    val_input,val_labels=val_batch
     probs = model_adapter.get_probability(val_input)
-    outputs, val_labels = model_adapter.validate(val_input, val_labels)
+    outputs, val_labels = model_adapter.validate(val_batch)
     suspicious_samples = []
 
     for idx, (sample, label) in enumerate(zip(probs, val_labels)):
@@ -177,19 +178,17 @@ def kCV_outer(
         fold_scores[fold] = scores
         fold_acc[fold] = class_based_accuracy
         if model_adapter.check_mislabeling:
-            val_inputs, val_labels = val_batch
-            suspicious_samples = check_mislabel(model_adapter, val_inputs, val_labels)
+            suspicious_samples = check_mislabel(model_adapter, val_batch)
             for new_sample in suspicious_samples:
                 already_sus = False
                 for sample in mislabel_data:
-                    if np.array_equal(sample["input_value"], new_sample["input_value"]):
+                    if np.array_equal(sample["input value"], new_sample["input value"]):
                         already_sus = True
                 if not already_sus:
                     mislabel_data.append(new_sample)
 
     if model_adapter.check_mislabeling:
-        inputs, labels = mislabeled_data
-        wrong_samples = check_mislabel(model_adapter.model, inputs, labels)
+        wrong_samples = check_mislabel(model_adapter, mislabeled_data)
 
         return mislabel_data, wrong_samples
 
@@ -211,7 +210,7 @@ def get_mislabeling(
         for new_sample in mislabel_data:
             already_sus = False
             for sample in mislabels:
-                if np.array_equal(sample["input_value"], new_sample["input_value"]):
+                if np.array_equal(sample["input value"], new_sample["input value"]):
                     already_sus = True
             if not already_sus:
                 mislabels.append(new_sample)

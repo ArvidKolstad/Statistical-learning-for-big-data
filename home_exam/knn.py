@@ -14,7 +14,7 @@ class KNNModelAdapter(BaseModelAdapter[BaseTrainConfig]):
         return preds, val_labels
 
     def get_probability(self, val_input) -> np.ndarray:
-        probability = self.model.predict_probability(val_input)
+        probability = self.model.get_probability(val_input)
         return probability
 
 

@@ -62,7 +62,7 @@ class LogRegAdapter(BaseModelAdapter[TorchTrainConfig]):
             train_cfg.max_epochs,
             train_loader,
             val_loader,
-            train_cfg.loss_function(weight=train_cfg.class_imbalance.to("cuda")),
+            train_cfg.loss_function(weight=train_cfg.class_imbalance.to(self.model.device)),
             opt,
             scheduler,
         )
