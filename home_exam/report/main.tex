@@ -298,29 +298,45 @@ In figure \ref{fig:classdist} we can see that the balances for the different cla
 \end{figure}
 \newpage
 \section{Question 2(a) and 2(b)}
+For this question a extreme dataset was supposed to be created were you had one majority class and then the rest of the classes as small minority classes. In figure \ref{fig:balance4} you can see that I chose to oversample class 1, and undersample the rest so each minority class 20 samples each. For this assingment I also created a extra model that I call Hierarchy. This model used a kNN classifier to clasify the majority class and the rest, and then a RDA classified the minority classes by itself. I used the kNN for it's complexity and strong classification with lots of samples, and RDA for it's flexibility and adaption to small sample sizes. The performance of the models can be found in \ref{fig:performance4}. We can see that as same as usual the Logistic Regression performs the worst and the other models does a better job. This is also now the macro F1-score really shines because it treats every class the same, which accuracy does not which is why we see a big difference between the two for the first time in this project. If wee look at figure \ref{fig:class4} we can see that almost all models have learned the majority class almost perfect and the other minority classes is the problem for all the models. The best perfromers is as we can see in figure \ref{fig:bayes4} that RDA and Hierarchy is the best scoring models with this dataset. This is expected because of the performance of the RDA trough out the project, but i really tougght that the combination of KNN would be better. We can see that the Hierarchy has a higher median f1-score but also has a greater variance, which could be explained with that kNN has a hard time finding the minority class while classifying everything ass majority class. variance, which could be explained with that kNN has a hard time finding the minority class while classifying everything ass majority class.
 \newpage
 \subsection{Conclusions}
+\begin{itemize}
+	\item Despite the high oversampling of class 1, most of the models does a good job of classifying the dataset.
+	\item Hierarchy had the greatest medain f1-macro score but also had a higher variance than the rest of the models which makes it a bit tricky.
+	\item RDA had both the smallest variance and one of the highest f1-scores which shows the power of adaptability.
+\end{itemize}
 \newpage
 
 \begin{figure}[H]
 	\begin{center}
-		\includegraphics[width=0.95\textwidth]{../figures/problem4/class_balance_extreme.pdf}
+		\includegraphics[width=0.99\textwidth]{../figures/problem4/class_balance_extreme.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{Class distribution of the training dataset under the extreme imbalance condition. Class 1 constitutes the vast majority of samples (90.9\%), while Classes 2–7 each account for approximately 1.5\% of observations, reflecting a severely skewed class distribution used to evaluate classifier robustness under extreme imbalance.}\label{fig:balance4}
+
 \end{figure}
 
 \begin{figure}[H]
 	\begin{center}
-		\includegraphics[width=0.95\textwidth]{../figures/problem4/performance_boxplot.pdf}
+		\includegraphics[width=0.99\textwidth]{../figures/problem4/performance_boxplot.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{Distribution of accuracy and macro-averaged F1-score across classifiers under the extreme class imbalance condition. Box plots display the median, interquartile range, and outliers for KNN, LogReg, RDA, and the hierarchical classifier. While accuracy is uniformly high across all methods due to class imbalance, F1-score reveals greater variation, with Hierarchy and RDA achieving the highest median performance.}\label{fig:performance4}
+
 \end{figure}
-\begin{figure}
+\begin{figure}[H]
 	\begin{center}
-		\includegraphics[width=0.95\textwidth]{../figures/problem4/bayes_comp.pdf}
+		\includegraphics[width=0.99\textwidth]{../figures/problem4/class_accuracy.pdf}
 	\end{center}
-	\caption{}\label{fig:}
+	\caption{Per-class accuracy as a function of training sample size under the extreme imbalance condition, shown separately for each classifier (KNN, LogReg, RDA, Hierarchy). Each line corresponds to one of the seven classes. The dominant class Class 1 consistently achieves high accuracy across all sample sizes and classifiers, while minority classes Classes 2–7 exhibit greater variability and generally lower accuracy, particularly at small sample sizes.}\label{ fig:class4}
 \end{figure}
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=1.1\textwidth]{../figures/problem4/bayes_comp.pdf}
+	\end{center}
+	\caption{Pairwise Bayesian comparisons of classifier performance under the extreme imbalance condition. Results indicate that RDA and Hierarchy are largely equivalent to each other, while both substantially outperform KNN and LogReg with high posterior probability.}\label{fig:bayes4}
+
+\end{figure}
+
 
 
 

@@ -369,7 +369,7 @@ def plot_class_accuracy(samples):
             statistics[i, 0, j, :] = np.mean(data_dict[name], axis=0)
             statistics[i, 1, j, :] = np.std(data_dict[name], axis=0)
 
-    fig, ax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+    fig, ax = plt.subplots(1, 4, figsize=(12, 4), sharey=True)
 
     num_classes = len(classes)
     total_width = 0.8
@@ -413,7 +413,7 @@ def main():
     plot_performance_2a()
 
     # get_rope_size("f1-score", 10)
-    plot_bayes_analysis(samples)
+    # plot_bayes_analysis(samples)
     plot_class_accuracy(samples)
     # plot_bayes_data_destruction(sizes)
 

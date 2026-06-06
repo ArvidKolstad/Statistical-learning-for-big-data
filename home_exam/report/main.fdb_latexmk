@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1780694333.04818 "main.tex" "main.pdf" "main" 1780694333.6525 0
+["pdflatex"] 1780696448.82008 "main.tex" "main.pdf" "main" 1780696449.43388 0
   "../figures/problem1/bayes_comp.pdf" 1780670686.41406 17816 2c74b545fde120b7bcf06564fdfd8b91 ""
   "../figures/problem1/class_accuracy.pdf" 1780670686.87507 23239 a65e1d7631df844113da541d225cb525 ""
   "../figures/problem1/performance.pdf" 1780686012.29261 13962 6dcfd0789c9183147b500b7a519997ad ""
@@ -10,8 +10,9 @@
   "../figures/problem3/model_conf_acc_7680.pdf" 1780690083.88599 19342 4bf10febedb045423ef3a316a8e87985 ""
   "../figures/problem3/test_confidence.pdf" 1780690084.42599 21573 a3ca376c26e671cdaba50aa1de6f3823 ""
   "../figures/problem4/bayes_comp.pdf" 1780593554.98482 18426 c8a02ba6a36c9298e172c4f4736f36c3 ""
+  "../figures/problem4/class_accuracy.pdf" 1780694749.74709 17541 24e3c8f3f2135d731fe68ac81834de83 ""
   "../figures/problem4/class_balance_extreme.pdf" 1780655615.80181 11042 462dfec394f53aae6e96e7c2f2ab56a9 ""
-  "../figures/problem4/performance_boxplot.pdf" 1780694331.13363 15373 ede1201a116ca7909a9f10c11e766a7f ""
+  "../figures/problem4/performance_boxplot.pdf" 1780694749.40709 15373 8c5ea6da5e8e2af2f23d4f93643d33e2 ""
   "../figures/vis_data/show_elbow.pdf" 1780667958.81608 42126 8297645f6e9ee1ba9d62a5e6b60a868c ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -133,9 +134,9 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1757582839 5528033 2de1857e87beaf98978b63b6132a9b29 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1757582939 3605800 db2d2d5241c583d393506a8a45cfd127 ""
   "/usr/local/texlive/2025/texmf.cnf" 1757582833.95572 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1780694333.58883 11639 f9985fcaf3bee3495e31a3fb6d84c8ac "pdflatex"
-  "main.out" 1780694333.58961 1203 83e5456ab8e828e5a59d38587102d574 "pdflatex"
-  "main.tex" 1780693900.20661 31421 7f89c32798a37c577cdb8c4134c01db2 ""
+  "main.aux" 1780696449.37037 14709 b9dad0a4f87e7a19427bb177b3c8c4ff "pdflatex"
+  "main.out" 1780696449.37116 1203 83e5456ab8e828e5a59d38587102d574 "pdflatex"
+  "main.tex" 1780696447.16903 35338 8ad0ebb0e53c93190f4b0c5fe6a1750a ""
   (generated)
   "main.aux"
   "main.log"
